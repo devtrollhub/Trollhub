@@ -280,6 +280,7 @@ function HubLib:CreateWindow(hubName, githubIconId)
     local HubTitle = Instance.new("TextLabel")
     HubTitle.Parent = TopBar
     HubTitle.Text = hubName .. " | " .. CurrentGameName
+    HubTitle.BackgroundTransparency = 1
     -- SỬA TẠI ĐÂY: Cho Title rộng hẳn ra (260 pixel) để không bị cắt chữ hay đè
     HubTitle.Size = UDim2.new(0, 260, 1, 0)
     HubTitle.Position = UDim2.new(0, 15, 0, 0)
