@@ -271,34 +271,32 @@ function HubLib:CreateWindow(hubName, githubIconId)
     TopBar.Name = "TopBar"
     TopBar.Parent = MainFrame
     TopBar.Size = UDim2.new(1, 0, 0, 45)
-    TopBar.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-    TopBar.BackgroundTransparency = 1
+    TopBar.BackgroundColor3 = Color3.fromRGB(18, 18, 18) -- Đen đồng bộ với nền dưới
+    TopBar.BackgroundTransparency = 1 -- Trong suốt hoàn toàn để không lộ vệt xám
 
-        -- ================================================================
-    -- ĐOẠN SỬA: PHÂN CHIA LẠI VỊ TRÍ VÀ THÊM MÀU ĐỎ/VÀNG CHO ĐẸP
+    -- ================================================================
+    -- ĐÃ SỬA: XÓA CHỮ GAME NAME XÁM, CHỈ ĐỂ LẠI TÊN HUB ĐỎ RỰC
     -- ================================================================
     local HubTitle = Instance.new("TextLabel")
     HubTitle.Parent = TopBar
-    HubTitle.Text = hubName .. " | " .. CurrentGameName
+    HubTitle.Text = hubName -- Xóa bỏ đoạn rác CurrentGameName gây xám màn hình
     HubTitle.BackgroundTransparency = 1
-    -- SỬA TẠI ĐÂY: Cho Title rộng hẳn ra (260 pixel) để không bị cắt chữ hay đè
-    HubTitle.Size = UDim2.new(0, 260, 1, 0)
+    HubTitle.Size = UDim2.new(0, 250, 1, 0)
     HubTitle.Position = UDim2.new(0, 15, 0, 0)
     HubTitle.Font = Enum.Font.GothamBold
-    -- SỬA TẠI ĐÂY: Đổi từ màu trắng (255,255,255) sang màu ĐỎ CHÁY (255, 50, 50) hoặc VÀNG (255, 200, 0) cho tone-sur-tone với Hub!
-    HubTitle.TextColor3 = Color3.fromRGB(255, 50, 50) 
-    HubTitle.TextSize = 13 -- Hạ xuống 13 một tí cho vừa vặn, đỡ thô
+    HubTitle.TextColor3 = Color3.fromRGB(255, 50, 50) -- Màu đỏ cháy cực ngầu
+    HubTitle.TextSize = 14
     HubTitle.TextXAlignment = Enum.TextXAlignment.Left
-    HubTitle.TextStrokeTransparency = 0.8 -- Tạo một lớp viền mờ giúp chữ rõ hơn
-    HubTitle.TextStrokeColor3 = Color3.fromRGB(0, 0, 0) -- Viền màu đen
+    HubTitle.TextStrokeTransparency = 0.85 
+    HubTitle.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    HubTitle.TextTruncate = Enum.TextTruncate.None -- Tắt hẳn tự thu gọn chữ gây mờ
 
-        local TabContainer = Instance.new("ScrollingFrame")
+    local TabContainer = Instance.new("ScrollingFrame")
     TabContainer.Parent = TopBar
-    TabContainer.Size = UDim2.new(1, -285, 1, 0)
-    TabContainer.Position = UDim2.new(0, 275, 0, 0)
+    TabContainer.Size = UDim2.new(1, -275, 1, 0)
+    TabContainer.Position = UDim2.new(0, 265, 0, 0)
     TabContainer.BackgroundTransparency = 1
     TabContainer.ScrollBarThickness = 0
-    -- MẶC ĐỊNH: Tắt kéo đi trước, khi nào nhiều tab mới tự bật
     TabContainer.ScrollingEnabled = false 
 
     local TabListLayout = Instance.new("UIListLayout")
@@ -307,30 +305,18 @@ function HubLib:CreateWindow(hubName, githubIconId)
     TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
     TabListLayout.Padding = UDim.new(0, 6)
 
-    -- ================================================================
-    -- ĐOẠN CODE TỰ ĐỘNG BẬT/TẮT KÉO KHI THÊM TAB
-    -- ================================================================
-    -- Mỗi khi có tab mới được thêm vào hoặc thay đổi kích thước, luồng này sẽ tự kiểm tra
+    -- Tự động bật/tắt chức năng vuốt kéo dựa vào số lượng Tab
     TabListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        local totalWidth = TabListLayout.AbsoluteContentSize.X -- Tổng độ rộng của tất cả các nút tab
-        local containerWidth = TabContainer.AbsoluteWindowSize.X -- Độ rộng thực tế của khung chứa Tab
-        
+        local totalWidth = TabListLayout.AbsoluteContentSize.X
+        local containerWidth = TabContainer.AbsoluteWindowSize.X
         if totalWidth > containerWidth then
-            -- Nếu nhiều tab quá, tràn khung thì bật tính năng kéo và tự tính toán CanvasSize
             TabContainer.ScrollingEnabled = true
             TabContainer.CanvasSize = UDim2.new(0, totalWidth + 10, 0, 0)
         else
-            -- Nếu ít tab, vừa vặn khung hình thì khóa chức năng kéo lại cho mượt
             TabContainer.ScrollingEnabled = false
             TabContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
         end
     end)
-
-    local TabListLayout = Instance.new("UIListLayout")
-    TabListLayout.Parent = TabContainer
-    TabListLayout.FillDirection = Enum.FillDirection.Horizontal
-    TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    TabListLayout.Padding = UDim.new(0, 6)
 
     local ContentContainer = Instance.new("Frame")
     ContentContainer.Parent = MainFrame
@@ -346,9 +332,6 @@ function HubLib:CreateWindow(hubName, githubIconId)
             dragStart = input.Position
             startPos = MainFrame.Position
         end
-    end)
-    TopBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true dragStart = input.Position startPos = MainFrame.Position end
     end)
     TopBar.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end
