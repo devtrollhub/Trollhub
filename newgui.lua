@@ -1042,7 +1042,7 @@ VerifyGameSupport(function()
 local haltCrucifixActive = false
 local loopConnection
 
-CreateToggle(MainTab, "Auto Xích Halt", function(state)
+MainTab:CreateToggle("Auto Xích Halt", function(state)
     haltCrucifixActive = state
     
     if state then
