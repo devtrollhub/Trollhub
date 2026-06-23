@@ -271,7 +271,7 @@ function HubLib:CreateWindow(hubName, githubIconId)
     TopBar.Name = "TopBar"
     TopBar.Parent = MainFrame
     TopBar.Size = UDim2.new(1, 0, 0, 45)
-    TopBar.BackgroundColor3 = Color3.fromRGB(26, 26, 26)
+    TopBar.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
 
         -- ================================================================
     -- ĐOẠN SỬA: PHÂN CHIA LẠI VỊ TRÍ VÀ THÊM MÀU ĐỎ/VÀNG CHO ĐẸP
