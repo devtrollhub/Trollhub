@@ -292,8 +292,8 @@ function CreateTab(tabName)
     TabPage.Parent = Container
     
         local TabPageLayout = Instance.new("UIListLayout")
-    TabPageLayout.Padding = UDim.new(0, 8) -- Khoảng cách giữa các nút khít nhau hơn (8 thay vì 10)
-    TabPageLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center -- ÉP CĂN GIỮA
+        local TabPageLayout = Instance.new("UIListLayout")
+    TabPageLayout.Padding = UDim.new(0, 8) -- Khoảng cách giữa các phần tử khít lại cho đẹp
     TabPageLayout.Parent = TabPage
     
     TabPageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -333,35 +333,32 @@ end
 
 function CreateToggle(parentTab, toggleText, callback)
     local ToggleFrame = Instance.new("Frame")
-    -- SỬA Ở ĐÂY: Thu nhỏ chiều ngang xuống 92% thay vì tràn 100%, chiều cao hạ xuống 38 cho thanh thoát
-    ToggleFrame.Size = UDim2.new(0.92, 0, 0, 38)
-    ToggleFrame.Position = UDim2.new(0.04, 0, 0, 0) -- Căn giữa lề
+    -- Giữ nguyên tỉ lệ ngang 1, -16 để không lỗi UI, nhưng hạ chiều cao xuống 36 (gọn hơn 45 cũ)
+    ToggleFrame.Size = UDim2.new(1, -16, 0, 36)
     ApplyGlassStyle(ToggleFrame, 0.5, Color3.fromRGB(255, 255, 255))
     ToggleFrame.Parent = parentTab
     
-    -- Chỉnh chữ nhỏ lại một chút cho cân đối
     local Txt = Instance.new("TextLabel")
     Txt.Size = UDim2.new(0.6, 0, 1, 0)
     Txt.Position = UDim2.new(0, 12, 0, 0)
     Txt.BackgroundTransparency = 1
     Txt.Text = toggleText
     Txt.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Txt.TextSize = 12 -- Giảm từ 14 xuống 12
+    Txt.TextSize = 13 -- Nhỏ nhắn vừa mắt
     Txt.Font = Enum.Font.GothamMedium
     Txt.TextXAlignment = Enum.TextXAlignment.Left
     Txt.Parent = ToggleFrame
     
-    -- Công tắc gạt (Switch) làm nhỏ lại cho tinh tế
     local Switch = Instance.new("TextButton")
-    Switch.Size = UDim2.new(0, 40, 0, 20) -- Thu nhỏ lại
-    Switch.Position = UDim2.new(1, -52, 0.5, -10)
+    Switch.Size = UDim2.new(0, 42, 0, 22) -- Thu nhỏ công tắc
+    Switch.Position = UDim2.new(1, -54, 0.5, -11)
     Switch.Text = ""
     ApplyGlassStyle(Switch, 0.6, Color3.fromRGB(0, 120, 255))
     Switch.Parent = ToggleFrame
     
     local Slider = Instance.new("Frame")
-    Slider.Size = UDim2.new(0, 14, 0, 14) -- Nút tròn nhỏ lại
-    Slider.Position = UDim2.new(0, 3, 0.5, -7)
+    Slider.Size = UDim2.new(0, 16, 0, 16)
+    Slider.Position = UDim2.new(0, 3, 0.5, -8)
     Slider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     local sliderCorner = Instance.new("UICorner")
     sliderCorner.CornerRadius = UDim.new(1, 0)
@@ -372,10 +369,10 @@ function CreateToggle(parentTab, toggleText, callback)
     Switch.MouseButton1Click:Connect(function()
         toggled = not toggled
         if toggled then
-            TweenService:Create(Slider, TweenInfo.new(0.2), {Position = UDim2.new(1, -17, 0.5, -7), BackgroundColor3 = Color3.fromRGB(255, 215, 0)}):Play()
+            TweenService:Create(Slider, TweenInfo.new(0.2), {Position = UDim2.new(1, -19, 0.5, -8), BackgroundColor3 = Color3.fromRGB(255, 215, 0)}):Play()
             TweenService:Create(Switch, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 120, 255)}):Play()
         else
-            TweenService:Create(Slider, TweenInfo.new(0.2), {Position = UDim2.new(0, 3, 0.5, -7), BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            TweenService:Create(Slider, TweenInfo.new(0.2), {Position = UDim2.new(0, 3, 0.5, -8), BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
             TweenService:Create(Switch, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(20, 30, 50)}):Play()
         end
         pcall(callback, toggled)
@@ -419,18 +416,14 @@ end
 
 function CreateButton(parentTab, btnText, callback)
     local Btn = Instance.new("TextButton")
-    -- SỬA Ở ĐÂY: Rộng 92%, Cao 36
-    Btn.Size = UDim2.new(0.92, 0, 0, 36)
+    -- Hạ chiều cao từ 40 xuống 34 cho gọn
+    Btn.Size = UDim2.new(1, -16, 0, 34)
     Btn.Text = btnText
     Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Btn.TextSize = 12
+    Btn.TextSize = 13
     Btn.Font = Enum.Font.GothamBold
     ApplyGlassStyle(Btn, 0.4, Color3.fromRGB(0, 120, 255))
     Btn.Parent = parentTab
-    
-    -- Thêm đoạn này để ép các nút tự động cách lề đều nhau
-    local align = Instance.new("UIAlignment") 
-    -- (Hoặc để tự UIListLayout trong TabPage lo, chỉ cần đổi Size là nút tự đẹp)
     
     Btn.MouseButton1Click:Connect(function()
         local oldColor = Btn.UIStroke.Color
@@ -491,24 +484,23 @@ end
 -- FUNCTION: DROPDOWN CHỌN NGƯỜI CHƠI & TELEPORT
 function CreateDropdown(parentTab, dropdownText, callback)
     local DropdownFrame = Instance.new("Frame")
-    -- SỬA Ở ĐÂY: Gom gọn lại
-    DropdownFrame.Size = UDim2.new(0.92, 0, 0, 38)
+    DropdownFrame.Size = UDim2.new(1, -16, 0, 36) -- Cao 36 thay vì 45
     ApplyGlassStyle(DropdownFrame, 0.5, Color3.fromRGB(255, 255, 255))
     DropdownFrame.Parent = parentTab
     DropdownFrame.ClipsDescendants = true
     
     local MainBtn = Instance.new("TextButton")
-    MainBtn.Size = UDim2.new(1, 0, 0, 38)
+    MainBtn.Size = UDim2.new(1, 0, 0, 36)
     MainBtn.BackgroundTransparency = 1
     MainBtn.Text = dropdownText .. " 🔽"
     MainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MainBtn.TextSize = 12
+    MainBtn.TextSize = 13
     MainBtn.Font = Enum.Font.GothamMedium
     MainBtn.Parent = DropdownFrame
     
     local OptionsFrame = Instance.new("ScrollingFrame")
-    OptionsFrame.Size = UDim2.new(1, -10, 0, 120)
-    OptionsFrame.Position = UDim2.new(0, 5, 0, 50)
+    OptionsFrame.Size = UDim2.new(1, -10, 0, 100)
+    OptionsFrame.Position = UDim2.new(0, 5, 0, 40)
     OptionsFrame.BackgroundTransparency = 1
     OptionsFrame.ScrollBarThickness = 2
     OptionsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -524,19 +516,18 @@ function CreateDropdown(parentTab, dropdownText, callback)
 
     local isOpen = false
     
-    -- Hàm làm mới danh sách người chơi khi bấm mở Dropdown
     local function RefreshOptions()
         for _, child in pairs(OptionsFrame:GetChildren()) do
             if child:IsA("TextButton") then child:Destroy() end
         end
         
         for _, p in pairs(game:GetService("Players"):GetPlayers()) do
-            if p ~= game:GetService("Players").LocalPlayer then -- Không hiện tên bản thân
+            if p ~= game:GetService("Players").LocalPlayer then
                 local OptBtn = Instance.new("TextButton")
-                OptBtn.Size = UDim2.new(1, 0, 0, 30)
+                OptBtn.Size = UDim2.new(1, 0, 0, 28) -- Các nút chọn nhỏ lại
                 OptBtn.Text = p.Name
                 OptBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
-                OptBtn.TextSize = 13
+                OptBtn.TextSize = 12
                 OptBtn.Font = Enum.Font.Gotham
                 ApplyGlassStyle(OptBtn, 0.6, Color3.fromRGB(0, 120, 255))
                 OptBtn.Parent = OptionsFrame
@@ -544,7 +535,7 @@ function CreateDropdown(parentTab, dropdownText, callback)
                 OptBtn.MouseButton1Click:Connect(function()
                     MainBtn.Text = p.Name .. " 🔽"
                     isOpen = false
-                    TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, 45)}):Play()
+                    TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -16, 0, 36)}):Play()
                     pcall(callback, p.Name)
                 end)
             end
@@ -555,9 +546,9 @@ function CreateDropdown(parentTab, dropdownText, callback)
         isOpen = not isOpen
         if isOpen then
             RefreshOptions()
-            TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, 180)}):Play()
+            TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -16, 0, 150)}):Play()
         else
-            TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, 45)}):Play()
+            TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -16, 0, 36)}):Play()
         end
     end)
 end
