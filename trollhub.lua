@@ -291,9 +291,8 @@ function CreateTab(tabName)
     TabPage.ScrollBarThickness = 4
     TabPage.Parent = Container
     
-        local TabPageLayout = Instance.new("UIListLayout")
-        local TabPageLayout = Instance.new("UIListLayout")
-    TabPageLayout.Padding = UDim.new(0, 8) -- Khoảng cách giữa các phần tử khít lại cho đẹp
+    local TabPageLayout = Instance.new("UIListLayout")
+    TabPageLayout.Padding = UDim.new(0, 10)
     TabPageLayout.Parent = TabPage
     
     TabPageLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
@@ -333,32 +332,31 @@ end
 
 function CreateToggle(parentTab, toggleText, callback)
     local ToggleFrame = Instance.new("Frame")
-    -- Giữ nguyên tỉ lệ ngang 1, -16 để không lỗi UI, nhưng hạ chiều cao xuống 36 (gọn hơn 45 cũ)
-    ToggleFrame.Size = UDim2.new(1, -16, 0, 36)
+    ToggleFrame.Size = UDim2.new(1, -10, 0, 45)
     ApplyGlassStyle(ToggleFrame, 0.5, Color3.fromRGB(255, 255, 255))
     ToggleFrame.Parent = parentTab
     
     local Txt = Instance.new("TextLabel")
     Txt.Size = UDim2.new(0.6, 0, 1, 0)
-    Txt.Position = UDim2.new(0, 12, 0, 0)
+    Txt.Position = UDim2.new(0, 15, 0, 0)
     Txt.BackgroundTransparency = 1
     Txt.Text = toggleText
     Txt.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Txt.TextSize = 13 -- Nhỏ nhắn vừa mắt
-    Txt.Font = Enum.Font.GothamMedium
+    Txt.TextSize = 14
+    Txt.Font = Enum.Font.Gotham
     Txt.TextXAlignment = Enum.TextXAlignment.Left
     Txt.Parent = ToggleFrame
     
     local Switch = Instance.new("TextButton")
-    Switch.Size = UDim2.new(0, 42, 0, 22) -- Thu nhỏ công tắc
-    Switch.Position = UDim2.new(1, -54, 0.5, -11)
+    Switch.Size = UDim2.new(0, 50, 0, 26)
+    Switch.Position = UDim2.new(1, -65, 0.5, -13)
     Switch.Text = ""
     ApplyGlassStyle(Switch, 0.6, Color3.fromRGB(0, 120, 255))
     Switch.Parent = ToggleFrame
     
     local Slider = Instance.new("Frame")
-    Slider.Size = UDim2.new(0, 16, 0, 16)
-    Slider.Position = UDim2.new(0, 3, 0.5, -8)
+    Slider.Size = UDim2.new(0, 20, 0, 20)
+    Slider.Position = UDim2.new(0, 3, 0.5, -10)
     Slider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     local sliderCorner = Instance.new("UICorner")
     sliderCorner.CornerRadius = UDim.new(1, 0)
@@ -369,10 +367,10 @@ function CreateToggle(parentTab, toggleText, callback)
     Switch.MouseButton1Click:Connect(function()
         toggled = not toggled
         if toggled then
-            TweenService:Create(Slider, TweenInfo.new(0.2), {Position = UDim2.new(1, -19, 0.5, -8), BackgroundColor3 = Color3.fromRGB(255, 215, 0)}):Play()
+            TweenService:Create(Slider, TweenInfo.new(0.2), {Position = UDim2.new(1, -23, 0.5, -10), BackgroundColor3 = Color3.fromRGB(255, 215, 0)}):Play()
             TweenService:Create(Switch, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 120, 255)}):Play()
         else
-            TweenService:Create(Slider, TweenInfo.new(0.2), {Position = UDim2.new(0, 3, 0.5, -8), BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            TweenService:Create(Slider, TweenInfo.new(0.2), {Position = UDim2.new(0, 3, 0.5, -10), BackgroundColor3 = Color3.fromRGB(255, 255, 255)}):Play()
             TweenService:Create(Switch, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(20, 30, 50)}):Play()
         end
         pcall(callback, toggled)
@@ -416,12 +414,11 @@ end
 
 function CreateButton(parentTab, btnText, callback)
     local Btn = Instance.new("TextButton")
-    -- Hạ chiều cao từ 40 xuống 34 cho gọn
-    Btn.Size = UDim2.new(1, -16, 0, 34)
+    Btn.Size = UDim2.new(1, -10, 0, 40)
     Btn.Text = btnText
     Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Btn.TextSize = 13
-    Btn.Font = Enum.Font.GothamBold
+    Btn.TextSize = 14
+    Btn.Font = Enum.Font.GothamMedium
     ApplyGlassStyle(Btn, 0.4, Color3.fromRGB(0, 120, 255))
     Btn.Parent = parentTab
     
@@ -484,23 +481,23 @@ end
 -- FUNCTION: DROPDOWN CHỌN NGƯỜI CHƠI & TELEPORT
 function CreateDropdown(parentTab, dropdownText, callback)
     local DropdownFrame = Instance.new("Frame")
-    DropdownFrame.Size = UDim2.new(1, -16, 0, 36) -- Cao 36 thay vì 45
+    DropdownFrame.Size = UDim2.new(1, -10, 0, 45)
     ApplyGlassStyle(DropdownFrame, 0.5, Color3.fromRGB(255, 255, 255))
     DropdownFrame.Parent = parentTab
-    DropdownFrame.ClipsDescendants = true
+    DropdownFrame.ClipsDescendants = true -- Để ẩn danh sách khi thu nhỏ
     
     local MainBtn = Instance.new("TextButton")
-    MainBtn.Size = UDim2.new(1, 0, 0, 36)
+    MainBtn.Size = UDim2.new(1, 0, 0, 45)
     MainBtn.BackgroundTransparency = 1
     MainBtn.Text = dropdownText .. " 🔽"
     MainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MainBtn.TextSize = 13
+    MainBtn.TextSize = 14
     MainBtn.Font = Enum.Font.GothamMedium
     MainBtn.Parent = DropdownFrame
     
     local OptionsFrame = Instance.new("ScrollingFrame")
-    OptionsFrame.Size = UDim2.new(1, -10, 0, 100)
-    OptionsFrame.Position = UDim2.new(0, 5, 0, 40)
+    OptionsFrame.Size = UDim2.new(1, -10, 0, 120)
+    OptionsFrame.Position = UDim2.new(0, 5, 0, 50)
     OptionsFrame.BackgroundTransparency = 1
     OptionsFrame.ScrollBarThickness = 2
     OptionsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -516,18 +513,19 @@ function CreateDropdown(parentTab, dropdownText, callback)
 
     local isOpen = false
     
+    -- Hàm làm mới danh sách người chơi khi bấm mở Dropdown
     local function RefreshOptions()
         for _, child in pairs(OptionsFrame:GetChildren()) do
             if child:IsA("TextButton") then child:Destroy() end
         end
         
         for _, p in pairs(game:GetService("Players"):GetPlayers()) do
-            if p ~= game:GetService("Players").LocalPlayer then
+            if p ~= game:GetService("Players").LocalPlayer then -- Không hiện tên bản thân
                 local OptBtn = Instance.new("TextButton")
-                OptBtn.Size = UDim2.new(1, 0, 0, 28) -- Các nút chọn nhỏ lại
+                OptBtn.Size = UDim2.new(1, 0, 0, 30)
                 OptBtn.Text = p.Name
                 OptBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
-                OptBtn.TextSize = 12
+                OptBtn.TextSize = 13
                 OptBtn.Font = Enum.Font.Gotham
                 ApplyGlassStyle(OptBtn, 0.6, Color3.fromRGB(0, 120, 255))
                 OptBtn.Parent = OptionsFrame
@@ -535,7 +533,7 @@ function CreateDropdown(parentTab, dropdownText, callback)
                 OptBtn.MouseButton1Click:Connect(function()
                     MainBtn.Text = p.Name .. " 🔽"
                     isOpen = false
-                    TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -16, 0, 36)}):Play()
+                    TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, 45)}):Play()
                     pcall(callback, p.Name)
                 end)
             end
@@ -546,9 +544,9 @@ function CreateDropdown(parentTab, dropdownText, callback)
         isOpen = not isOpen
         if isOpen then
             RefreshOptions()
-            TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -16, 0, 150)}):Play()
+            TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, 180)}):Play()
         else
-            TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -16, 0, 36)}):Play()
+            TweenService:Create(DropdownFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, -10, 0, 45)}):Play()
         end
     end)
 end
