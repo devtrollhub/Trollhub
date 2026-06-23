@@ -1038,6 +1038,42 @@ VerifyGameSupport(function()
                     end
                 end)
 
+-- ==================== TOGGLE KÍCH HOẠT THÁNH GIÁ (HALT) ====================
+local haltCrucifixActive = false
+local loopConnection
+
+CreateToggle(MainTab, "Auto Xích Halt", function(state)
+    haltCrucifixActive = state
+    
+    if state then
+        -- Vòng lặp liên tục gửi tín hiệu để xích quái vật khi nó xuất hiện
+        loopConnection = task.spawn(function()
+            while haltCrucifixActive do
+                pcall(function()
+                    -- Kiểm tra xem Remote có tồn tại thật không rồi kích hoạt nó
+                    local remote = game.ReplicatedStorage:FindFirstChild("RemotesFolder") and game.ReplicatedStorage.RemotesFolder:FindFirstChild("HaltCrucifix")
+                    
+                    if remote then
+                        -- Tùy thuộc vào game dùng RemoteEvent hay RemoteFunction:
+                        if remote:IsA("RemoteEvent") then
+                            remote:FireServer()
+                        elseif remote:IsA("RemoteFunction") then
+                            remote:InvokeServer()
+                        end
+                    end
+                end)
+                task.wait(0.5) -- Nghỉ nửa giây rồi gửi lại để tránh bị spam lag
+            end
+        end)
+    else
+        -- Tắt toggle thì dừng vòng lặp
+        if loopConnection then
+            haltCrucifixActive = false
+            loopConnection = nil
+        end
+    end
+end)
+
                 MainTab:CreateLabel("🚪 Successfully loaded into DOORS! Features are running perfectly.")
                 InfoTab:CreateLabel("👑 Owner: Haianh-trollhub")
                 InfoTab:CreateLabel("🚀 Version: Troll Hub DOORS v1.0")
