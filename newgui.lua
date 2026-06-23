@@ -232,7 +232,7 @@ function HubLib:CreateWindow(hubName, githubIconId)
     ToggleHubBtn.Size = UDim2.new(0, 48, 0, 48)
     ToggleHubBtn.Position = UDim2.new(0, 20, 0, 20)
     ToggleHubBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    ToggleHubBtn.Image = "rbxassetid://" .. (githubIconId or "0")
+    ToggleHubBtn.Image = "rbxassetid://133586747084855" .. (githubIconId or "0")
     
     local ToggleCorner = Instance.new("UICorner")
     ToggleCorner.CornerRadius = UDim.new(0, 10)
