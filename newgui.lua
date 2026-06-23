@@ -27,7 +27,6 @@ local TargetGames = {
     [97598239454123] = "Grow A Garden 2",
     [7577961216]     = "Squid Game X (Lobby)",
     [7577981568]     = "Squid Game X (Gameplay)",
-    [0]              = "Roblox Studio (Môi trường Test)" -- Thêm ID 0 để cậu test trong Studio nếu cần
 }
 
 local CorrectKey = "bloxypremium2026" -- Key mặc định để đăng nhập Hub
@@ -274,23 +273,30 @@ function HubLib:CreateWindow(hubName, githubIconId)
     TopBar.Size = UDim2.new(1, 0, 0, 45)
     TopBar.BackgroundColor3 = Color3.fromRGB(26, 26, 26)
 
+        -- ================================================================
+    -- ĐOẠN SỬA: PHÂN CHIA LẠI VỊ TRÍ VÀ THÊM MÀU ĐỎ/VÀNG CHO ĐẸP
+    -- ================================================================
     local HubTitle = Instance.new("TextLabel")
     HubTitle.Parent = TopBar
     HubTitle.Text = hubName .. " | " .. CurrentGameName
-    HubTitle.Size = UDim2.new(0, 190, 1, 0)
+    -- SỬA TẠI ĐÂY: Cho Title rộng hẳn ra (260 pixel) để không bị cắt chữ hay đè
+    HubTitle.Size = UDim2.new(0, 260, 1, 0)
     HubTitle.Position = UDim2.new(0, 15, 0, 0)
     HubTitle.Font = Enum.Font.GothamBold
-    HubTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    HubTitle.TextSize = 14
+    -- SỬA TẠI ĐÂY: Đổi từ màu trắng (255,255,255) sang màu ĐỎ CHÁY (255, 50, 50) hoặc VÀNG (255, 200, 0) cho tone-sur-tone với Hub!
+    HubTitle.TextColor3 = Color3.fromRGB(255, 50, 50) 
+    HubTitle.TextSize = 13 -- Hạ xuống 13 một tí cho vừa vặn, đỡ thô
     HubTitle.TextXAlignment = Enum.TextXAlignment.Left
 
     local TabContainer = Instance.new("ScrollingFrame")
     TabContainer.Parent = TopBar
-    TabContainer.Size = UDim2.new(1, -210, 1, 0)
-    TabContainer.Position = UDim2.new(0, 200, 0, 0)
+    -- SỬA TẠI ĐÂY: Đẩy vị trí bắt đầu của thanh Tab lùi ra sau (từ pixel 275) để nhường chỗ cho Title dài
+    TabContainer.Size = UDim2.new(1, -285, 1, 0)
+    TabContainer.Position = UDim2.new(0, 275, 0, 0)
     TabContainer.BackgroundTransparency = 1
     TabContainer.CanvasSize = UDim2.new(2, 0, 0, 0)
     TabContainer.ScrollBarThickness = 0
+
 
     local TabListLayout = Instance.new("UIListLayout")
     TabListLayout.Parent = TabContainer
