@@ -15,7 +15,7 @@ ScreenGui.Name = "PremiumHubUI"
 ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 
----- ====================================================================
+-- ====================================================================
 -- DANH SÁCH ID CÁC GAME ĐƯỢC PHÉP CHẠY SCRIPT (TARGET GAMES)
 -- ====================================================================
 local TargetGames = {
@@ -28,6 +28,10 @@ local TargetGames = {
     [7577961216]     = "Squid Game X (Lobby)",
     [7577981568]     = "Squid Game X (Gameplay)",
 }
+
+-- SỬA LỖI: Gán biến lấy tên game ngay từ đầu để hàm VerifyGameSupport không bị báo lỗi Nil
+local currentId = game.PlaceId
+local CurrentGameName = TargetGames[currentId]
 
 local function VerifyGameSupport(callback)
     -- Tạo một bảng thông báo kiểm tra game nhỏ gọn, thiết kế đỏ đen cao cấp
@@ -74,7 +78,7 @@ local function VerifyGameSupport(callback)
         CheckText.Text = "🟢 Game Verified: " .. CurrentGameName
         task.wait(1.2)
         CheckFrame:Destroy()
-        callback() -- Chạy tiếp sang phần Loading Bar nếu hợp lệ
+        callback() -- Chạy tiếp sang phần Check Key nếu hợp lệ
     end
 end
 
@@ -142,7 +146,7 @@ end
 
 
 -- ====================================================================
--- DANH SÁCH CÁC KEY HỢP LỆ (Mày muốn thêm bao nhiêu key tùy thích)
+-- DANH SÁCH CÁC KEY HỢP LỆ
 -- ====================================================================
 local Allowed_Keys = {
     "TrollHubkeys",
@@ -169,7 +173,7 @@ KeyFrame.Name = "KeyFrame"
 KeyFrame.Size = UDim2.new(0, 320, 0, 180)
 KeyFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
 KeyFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-KeyFrame.Parent = ScreenGui
+KeyFrame.Parent = nil -- Ẩn đi khi bắt đầu, check game xong mới hiện
 
 local KeyCorner = Instance.new("UICorner")
 KeyCorner.CornerRadius = UDim.new(0, 12)
@@ -194,6 +198,9 @@ StatusLabel.Text = "Waiting for Script Key..."
 -- LOGIC TỰ ĐỘNG KIỂM TRA KEY (GIỐNG TRONG GAME + KICK)
 -- ====================================================================
 local function StartKeyCheck()
+    -- Đưa giao diện KeyFrame hiển thị lên màn hình sau khi Check Game hoàn tất
+    KeyFrame.Parent = ScreenGui
+    
     task.wait(0.5)
     StatusLabel.Text = "Checking Key."
     task.wait(0.4)
@@ -213,15 +220,20 @@ local function StartKeyCheck()
         game:GetService("Players").LocalPlayer:Kick("⚠️ [Troll Hub] Bạn chưa nhập Key vào script! Vui lòng lấy key trước khi chạy.")
         
     elseif checkValidKey(User_Key) then
-        -- Nếu key nằm trong danh sách Allowed_Keys -> Duyệt cho qua
+        -- Nếu key đúng -> Duyệt cho qua
         StatusLabel.Text = "✅ Key Approved! Loading Hub..."
         StatusLabel.TextColor3 = Color3.fromRGB(50, 255, 50)
         task.wait(1)
         
         KeyFrame:Destroy() -- Xóa UI check key đi
-        HubLib:CreateWindow("Troll Hub") -- Gọi hàm mở cửa sổ chính của mày ra
+        
+        -- Gọi hiệu ứng Loading Bar chạy từ 1% -> 100%
+        StartLoadingAnimation(function()
+            -- Khi Loading chạy xong, gọi hàm mở cửa sổ Hub chính gốc của mày
+            HubLib:CreateWindow("Troll Hub") 
+        end)
     else
-        -- Điền key lung tung không trùng cái nào -> Kick luôn
+        -- Điền key sai -> Kick luôn
         StatusLabel.Text = "❌ Invalid Key! Kicking..."
         StatusLabel.TextColor3 = Color3.fromRGB(255, 50, 50)
         task.wait(1.2)
@@ -229,8 +241,10 @@ local function StartKeyCheck()
     end
 end
 
--- Kích hoạt vòng check tự động ngay khi chạy script
-task.spawn(StartKeyCheck)
+-- LUỒNG CHẠY CHÍNH: Kích hoạt Check Game trước -> Xong mới gọi đến hàm StartKeyCheck()
+VerifyGameSupport(function()
+    task.spawn(StartKeyCheck)
+end)
 
 -- ====================================================================
 -- 4. KHỞI TẠO CỬA SỔ CHÍNH CỦA HUB (MAIN WINDOW UI LIBRARY)
