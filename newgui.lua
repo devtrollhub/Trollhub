@@ -484,60 +484,78 @@ function HubLib:CreateWindow(hubName, githubIconId)
 
         -- CREATE DROPDOWN
         function Elements:CreateDropdown(text, list, callback)
-            local DropdownFrame = Instance.new("Frame")
-            DropdownFrame.Size = UDim2.new(1, -10, 0, 38)
-            DropdownFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-            DropdownFrame.ClipsDescendants = true
-            DropdownFrame.Parent = TabPage
+    -- Đổi từ Frame thành ScrollingFrame để có thể cuộn được khi có 100 phòng
+    local DropdownFrame = Instance.new("ScrollingFrame")
+    DropdownFrame.Size = UDim2.new(1, -10, 0, 38)
+    DropdownFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    DropdownFrame.ClipsDescendants = true
+    DropdownFrame.BorderSizePixel = 0
+    DropdownFrame.ScrollBarThickness = 4 -- Độ dày thanh cuộn nhỏ gọn
+    DropdownFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+    DropdownFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Ban đầu chưa mở thì bằng 0
+    DropdownFrame.Parent = TabPage
 
-            local DFCorner = Instance.new("UICorner")
-            DFCorner.CornerRadius = UDim.new(0, 6)
-            DFCorner.Parent = DropdownFrame
+    local DFCorner = Instance.new("UICorner")
+    DFCorner.CornerRadius = UDim.new(0, 6)
+    DFCorner.Parent = DropdownFrame
 
-            local MainBtn = Instance.new("TextButton")
-            MainBtn.Size = UDim2.new(1, 0, 0, 38)
-            MainBtn.BackgroundTransparency = 1
-            MainBtn.Text = "   " .. text .. "  ▼"
-            MainBtn.Font = Enum.Font.GothamSemibold
-            MainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            MainBtn.TextSize = 13
-            MainBtn.TextXAlignment = Enum.TextXAlignment.Left
-            MainBtn.Parent = DropdownFrame
+    local MainBtn = Instance.new("TextButton")
+    MainBtn.Size = UDim2.new(1, 0, 0, 38)
+    MainBtn.BackgroundTransparency = 1
+    MainBtn.Text = "   " .. text .. "  ▼"
+    MainBtn.Font = Enum.Font.GothamSemibold
+    MainBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MainBtn.TextSize = 13
+    MainBtn.TextXAlignment = Enum.TextXAlignment.Left
+    MainBtn.ZIndex = 2 -- Đảm bảo nút chính luôn nằm trên các nút chọn phòng
+    MainBtn.Parent = DropdownFrame
 
-            local OptionLayout = Instance.new("UIListLayout")
-            OptionLayout.Parent = DropdownFrame
-            OptionLayout.Padding = UDim.new(0, 4)
+    local OptionLayout = Instance.new("UIListLayout")
+    OptionLayout.Parent = DropdownFrame
+    OptionLayout.Padding = UDim.new(0, 4)
 
-            local expanded = false
-            for _, option in pairs(list) do
-                local OptBtn = Instance.new("TextButton")
-                OptBtn.Size = UDim2.new(1, -20, 0, 28)
-                OptBtn.Position = UDim2.new(0, 10, 0, 0)
-                OptBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
-                OptBtn.Text = option
-                OptBtn.Font = Enum.Font.Gotham
-                OptBtn.TextColor3 = Color3.fromRGB(190, 190, 190)
-                OptBtn.TextSize = 12
-                OptBtn.Parent = DropdownFrame
+    local expanded = false
+    for _, option in pairs(list) do
+        local OptBtn = Instance.new("TextButton")
+        OptBtn.Size = UDim2.new(1, -20, 0, 28)
+        OptBtn.Position = UDim2.new(0, 10, 0, 0)
+        OptBtn.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
+        OptBtn.Text = option
+        OptBtn.Font = Enum.Font.Gotham
+        OptBtn.TextColor3 = Color3.fromRGB(190, 190, 190)
+        OptBtn.TextSize = 12
+        OptBtn.Parent = DropdownFrame
 
-                local OptCorner = Instance.new("UICorner")
-                OptCorner.CornerRadius = UDim.new(0, 5)
-                OptCorner.Parent = OptBtn
+        local OptCorner = Instance.new("UICorner")
+        OptCorner.CornerRadius = UDim.new(0, 5)
+        OptCorner.Parent = OptBtn
 
-                OptBtn.MouseButton1Click:Connect(function()
-                    MainBtn.Text = "   " .. text .. " : " .. option .. "  ▼"
-                    expanded = false
-                    TweenService:Create(DropdownFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.new(1, -10, 0, 38)}):Play()
-                    callback(option)
-                end)
-            end
+        OptBtn.MouseButton1Click:Connect(function()
+            MainBtn.Text = "   " .. text .. " : " .. option .. "  ▼"
+            expanded = false
+            -- Thu nhỏ lại về chiều cao gốc của nút chính
+            TweenService:Create(DropdownFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.new(1, -10, 0, 38)}):Play()
+            DropdownFrame.CanvasSize = UDim2.new(0, 0, 0, 0) -- Reset vùng cuộn
+            callback(option)
+        end)
+    end
 
-            MainBtn.MouseButton1Click:Connect(function()
-                expanded = not expanded
-                local targetHeight = expanded and (38 + (#list * 32)) or 38
-                TweenService:Create(DropdownFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.new(1, -10, 0, targetHeight)}):Play()
-            end)
+    MainBtn.MouseButton1Click:Connect(function()
+        expanded = not expanded
+        
+        -- Nếu mở rộng: Chiều cao khung UI tối đa là 200 (để không đè hết màn hình), nhưng vùng cuộn CanvasSize sẽ dài bằng tổng 100 nút
+        local targetHeight = expanded and 200 or 38
+        local targetCanvas = expanded and (OptionLayout.AbsoluteContentSize.Y + 45) or 0
+        
+        -- Nếu danh sách ngắn (ít hơn 5 phòng) thì lấy theo độ dài thực tế luôn cho đẹp
+        if expanded and OptionLayout.AbsoluteContentSize.Y < 200 then
+            targetHeight = OptionLayout.AbsoluteContentSize.Y + 10
         end
+
+        TweenService:Create(DropdownFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {Size = UDim2.new(1, -10, 0, targetHeight)}):Play()
+        DropdownFrame.CanvasSize = UDim2.new(0, 0, 0, targetCanvas)
+    end)
+end
 
         -- CREATE BOX
         function Elements:CreateBox(placeholder, callback)
@@ -590,13 +608,6 @@ function HubLib:CreateWindow(hubName, githubIconId)
     return Tabs
 end
 
-
--- ====================================================================
--- TIẾN TRÌNH LUỒNG ĐỒNG BỘ: CHECK GAME 5S -> LOADING -> KEY SYSTEM
--- ====================================================================
--- ====================================================================
--- TIẾN TRÌNH LUỒNG ĐỒNG BỘ: CHECK GAME 5S -> LOADING -> KEY SYSTEM
--- ====================================================================
 -- ====================================================================
 -- LUỒNG CHẠY ĐỒNG BỘ CHUẨN XÁC: CHECK GAME VÀO TRƯỚC -> XONG HIỆN KEY -> ĐÚNG KEY HIỆN LOADING 1 LẦN -> MỞ FULL TÍNH NĂNG
 -- ====================================================================
@@ -896,7 +907,7 @@ local fullBrightActive = false -- Biến trạng thái Full Bright
 -- ====================================================================
 -- BƯỚC 2: CÁC TOGGLE UI (NẰM TRÊN CÙNG)
 -- ====================================================================
-MainTab:CreateToggle("ESP Cửa", function(state)
+MainTab:CreateToggle("ESP Cửa(đang lỗi)", function(state)
     doorESPActive = state
     if not state then
         for _, obj in ipairs(workspace:GetDescendants()) do
@@ -905,7 +916,7 @@ MainTab:CreateToggle("ESP Cửa", function(state)
     end
 end)
 
-MainTab:CreateToggle("ESP Tủ Trốn", function(state)
+MainTab:CreateToggle("ESP Tủ Trốn(đang lỗi)", function(state)
     closetESPActive = state
     if not state then
         for _, obj in ipairs(workspace:GetDescendants()) do
@@ -914,7 +925,7 @@ MainTab:CreateToggle("ESP Tủ Trốn", function(state)
     end
 end)
 
-MainTab:CreateToggle("ESP Sách Phòng 50", function(state)
+MainTab:CreateToggle("ESP Sách Phòng 50(đang lỗi)", function(state)
     bookESPActive = state
     if not state then
         for _, obj in ipairs(workspace:GetDescendants()) do
@@ -1119,6 +1130,46 @@ MainTab:CreateButton("🚪 Kích Hoạt Mở Cửa", function()
     end
     
     print("🔓 Đã thực thi lệnh mở cửa thành công cho: " .. phongDaChon)
+end)
+
+-- [ĐOẠN TOGGLE ĐẶT Ở TRÊN]
+local keyESPActive = false
+local keyLoop
+
+MainTab:CreateToggle("ESP Chìa Khóa (Xịn)", function(state)
+    keyESPActive = state
+    
+    if not state then
+        -- Dọn dẹp ESP khi tắt
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj.Name == "RemoteInspect" then
+                removeESP(obj.Parent)
+            end
+        end
+    end
+end)
+
+
+-- [ĐOẠN VÒNG LẶP ĐẶT Ở DƯỚI - Y NGUYÊN BẢN GỐC CỦA MÀY]
+task.spawn(function()
+    while task.wait(1.5) do
+        if keyESPActive then
+            pcall(function()
+                -- Quét toàn bộ map để tìm bất cứ thứ gì có "RemoteInspect"
+                for _, obj in ipairs(workspace:GetDescendants()) do
+                    -- Chỉ những cái chìa khóa thật sự mới có cái RemoteInspect này
+                    if obj.Name == "RemoteInspect" and obj:IsA("RemoteEvent") then
+                        local keyModel = obj.Parent -- Cái chìa khóa là cha của cái Remote đó
+                        
+                        -- Kiểm tra xem đã gắn ESP chưa để tránh bị lag do vẽ đè
+                        if keyModel and not keyModel:FindFirstChild("DoorsESP") then
+                            createESP(keyModel, Color3.fromRGB(255, 255, 0), "Chìa Khóa")
+                        end
+                    end
+                end
+            end)
+        end
+    end
 end)
 
                 MainTab:CreateLabel("🚪 Successfully loaded into DOORS! Features are running perfectly.")
