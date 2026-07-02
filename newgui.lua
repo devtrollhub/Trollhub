@@ -892,63 +892,9 @@ VerifyGameSupport(function()
                 local MainTab = MyHub:CreateTab("🚪 DOORS Main")
                 InfoTab = MyHub:CreateTab("ℹ️ Info")
 
--- ====================================================================
--- BƯỚC 1: KHAI BÁO TRƯỚC TÊN HÀM (ĐỂ TOGGLE GỌI ĐƯỢC MÀ KHÔNG BỊ LỖI NIL)
--- ====================================================================
-local createESP, removeESP
-
--- Khai báo các biến trạng thái
-local doorESPActive = false
-local closetESPActive = false
-local bookESPActive = false
-local fullBrightActive = false -- Biến trạng thái Full Bright
-
-
--- ====================================================================
--- BƯỚC 2: CÁC TOGGLE UI (NẰM TRÊN CÙNG)
--- ====================================================================
-MainTab:CreateToggle("ESP Cửa(đang lỗi)", function(state)
-    doorESPActive = state
-    if not state then
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj.Name == "Door" then removeESP(obj) end
-        end
-    end
-end)
-
-MainTab:CreateToggle("ESP Tủ Trốn(đang lỗi)", function(state)
-    closetESPActive = state
-    if not state then
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj.Name == "Wardrobe" or obj.Name == "Closet" then removeESP(obj) end
-        end
-    end
-end)
-
-MainTab:CreateToggle("ESP Sách Phòng 50(đang lỗi)", function(state)
-    bookESPActive = state
-    if not state then
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj.Name == "LiveHintBook" or obj.Name == "Book" then removeESP(obj) end
-        end
-    end
-end)
-
-MainTab:CreateToggle("Full Bright", function(state)
-    fullBrightActive = state
-    if not state then
-        -- Trả Lighting về mặc định khi tắt hack sáng
-        game:GetService("Lighting").Ambient = Color3.fromRGB(0, 0, 0)
-        game:GetService("Lighting").OutdoorAmbient = Color3.fromRGB(128, 128, 128)
-        game:GetService("Lighting").Brightness = 1
-    end
-end)
-
-
--- ====================================================================
--- BƯỚC 3: ĐỊNH NGHĨA CÁC HÀM LOCAL FUNCTION (NẰM DƯỚI CÁC TOGGLE)
--- ====================================================================
-createESP = function(object, color, name)
+-- ==================== HÀM HỖ TRỢ ESP (CHUẨN HIGHLIGHT) ====================
+local function createESP(object, color, name)
+    if not object then return end
     if object:FindFirstChild("DoorsESP") then return end
     
     local highlight = Instance.new("Highlight")
@@ -975,98 +921,209 @@ createESP = function(object, color, name)
     textLabel.TextSize = 14
     textLabel.Font = Enum.Font.SourceSansBold
     textLabel.Parent = billboard
+    
     billboard.Parent = object
 end
 
-removeESP = function(object)
+local function removeESP(object)
+    if not object then return end
     if object:FindFirstChild("DoorsESP") then object.DoorsESP:Destroy() end
     if object:FindFirstChild("DoorsText") then object.DoorsText:Destroy() end
 end
 
+-- ==================== 1. TOGGLE ESP CỬA CHUẨN (ĐÃ SỬA THEO LOG) ====================
+local doorActive = false
+local doorLoop
 
--- ====================================================================
--- BƯỚC 4: VÒNG LẶP QUÉT TRẠNG THÁI (DƯỚI CÙNG)
--- ====================================================================
--- ====================================================================
--- BƯỚC 4: VÒNG LẶP QUÉT TRẠNG THÁI THEO PHẠM VI (DƯỚI CÙNG)
--- ====================================================================
-local ESP_DISTANCE = 500 -- Khoảng cách giới hạn (Dưới 500 studs mới hiện)
-
--- 1. Vòng lặp Full Bright (Hack sáng giữ nguyên)
-task.spawn(function()
-    local lighting = game:GetService("Lighting")
-    while task.wait(0.5) do
-        if fullBrightActive then
-            lighting.Ambient = Color3.fromRGB(255, 255, 255)
-            lighting.OutdoorAmbient = Color3.fromRGB(255, 255, 255)
-            lighting.Brightness = 3
-        end
-    end
-end)
-
--- 2. Vòng lặp ESP Cửa (Chỉ quét trong phạm vi)
-task.spawn(function()
-    while task.wait(1) do
-        local character = game:GetService("Players").LocalPlayer.Character
-        local root = character and character:FindFirstChild("HumanoidRootPart")
-        
-        if doorESPActive and createESP and root then
-            local myPos = root.Position
-            for _, obj in ipairs(workspace:GetDescendants()) do
-                if obj.Name == "Door" and obj:FindFirstChild("ClientDoor") then
-                    local dist = (obj:GetPivot().Position - myPos).Magnitude
-                    if dist <= ESP_DISTANCE then
-                        createESP(obj, Color3.fromRGB(0, 255, 0), "Cửa Đi Tiếp")
-                    else
-                        removeESP(obj) -- Ra xa quá thì xóa đi cho mượt
+MainTab:CreateToggle("ESP Cửa Chuẩn", function(state)
+    doorActive = state
+    
+    if state and not doorLoop then
+        doorLoop = task.spawn(function()
+            while doorActive do
+                pcall(function()
+                    local currentRooms = workspace:FindFirstChild("CurrentRooms")
+                    if currentRooms then
+                        for _, room in ipairs(currentRooms:GetChildren()) do
+                            -- Tìm chính xác Model tên "Door" nằm trong phòng (Bỏ hoàn toàn ClientDoor lỗi)
+                            local doorModel = room:FindFirstChild("Door")
+                            if doorModel and doorModel:IsA("Model") then
+                                -- Nhắm vào tấm cửa MeshPart hoặc phần thân chính bên trong nó để gắn ESP
+                                local targetPart = doorModel:FindFirstChild("Door") or doorModel:FindFirstChildWhichIsA("BasePart") or doorModel
+                                createESP(targetPart, Color3.fromRGB(0, 255, 0), "Cửa Phòng " .. room.Name)
+                            end
+                            
+                            -- Quét thêm cửa phụ/cửa hông nếu có (như DoorNormal xuất hiện ở phòng 1 trong log)
+                            local doorNormal = room:FindFirstChild("DoorNormal")
+                            if doorNormal and doorNormal:IsA("Model") then
+                                local targetNormal = doorNormal:FindFirstChild("Door") or doorNormal:FindFirstChildWhichIsA("BasePart") or doorNormal
+                                createESP(targetNormal, Color3.fromRGB(0, 255, 0), "Cửa Phụ " .. room.Name)
+                            end
+                        end
+                    end
+                end)
+                task.wait(1.5)
+            end
+            doorLoop = nil
+        end)
+    elseif not state then
+        pcall(function()
+            local currentRooms = workspace:FindFirstChild("CurrentRooms")
+            if currentRooms then
+                for _, room in ipairs(currentRooms:GetChildren()) do
+                    for _, child in ipairs(room:GetDescendants()) do
+                        if child.Name == "DoorsESP" or child.Name == "DoorsText" then child:Destroy() end
                     end
                 end
             end
-        end
+        end)
     end
 end)
 
--- 3. Vòng lặp ESP Tủ Trốn (Chỉ quét trong phạm vi)
-task.spawn(function()
-    while task.wait(1) do
-        local character = game:GetService("Players").LocalPlayer.Character
-        local root = character and character:FindFirstChild("HumanoidRootPart")
-        
-        if closetESPActive and createESP and root then
-            local myPos = root.Position
-            for _, obj in ipairs(workspace:GetDescendants()) do
-                if obj.Name == "Wardrobe" or obj.Name == "Closet" then
-                    local dist = (obj:GetPivot().Position - myPos).Magnitude
-                    if dist <= ESP_DISTANCE then
-                        createESP(obj, Color3.fromRGB(0, 162, 255), "Tủ Trốn")
-                    else
-                        removeESP(obj)
+
+-- ==================== 2. TOGGLE ESP TỦ TRỐN (QUÉT ASSETS CHUẨN) ====================
+local closetActive = false
+local closetLoop
+
+MainTab:CreateToggle("ESP Tủ Trốn", function(state)
+    closetActive = state
+    
+    if state and not closetLoop then
+        closetLoop = task.spawn(function()
+            while closetActive do
+                pcall(function()
+                    local currentRooms = workspace:FindFirstChild("CurrentRooms")
+                    if currentRooms then
+                        for _, room in ipairs(currentRooms:GetChildren()) do
+                            -- Đi theo đúng đường dẫn phân tích của cậu: room -> Assets
+                            local assets = room:FindFirstChild("Assets")
+                            if assets then
+                                -- Tìm Wardrobe nằm trong thư mục Assets
+                                local wardrobe = assets:FindFirstChild("Wardrobe")
+                                if wardrobe then
+                                    createESP(wardrobe, Color3.fromRGB(0, 162, 255), "Tủ Trốn")
+                                end
+                            end
+                        end
+                    end
+                end)
+                task.wait(2)
+            end
+            closetLoop = nil
+        end)
+    elseif not state then
+        pcall(function()
+            local currentRooms = workspace:FindFirstChild("CurrentRooms")
+            if currentRooms then
+                for _, room in ipairs(currentRooms:GetChildren()) do
+                    local assets = room:FindFirstChild("Assets")
+                    if assets then
+                        local wardrobe = assets:FindFirstChild("Wardrobe")
+                        if wardrobe then removeESP(wardrobe) end
                     end
                 end
             end
-        end
+        end)
     end
 end)
 
--- 4. Vòng lặp ESP Sách Phòng 50 (Chỉ quét trong phạm vi)
-task.spawn(function()
-    while task.wait(1) do
-        local character = game:GetService("Players").LocalPlayer.Character
-        local root = character and character:FindFirstChild("HumanoidRootPart")
-        
-        if bookESPActive and createESP and root then
-            local myPos = root.Position
+
+-- ==================== 3. TOGGLE ESP SÁCH PHÒNG 50 (SỬA THEO MESH CUBE) ====================
+local bookActive = false
+local bookLoop
+
+MainTab:CreateToggle("ESP Sách Phòng 50", function(state)
+    bookActive = state
+    
+    if state and not bookLoop then
+        bookLoop = task.spawn(function()
+            while bookActive do
+                pcall(function()
+                    local currentRooms = workspace:FindFirstChild("CurrentRooms")
+                    if currentRooms then
+                        -- Sách xuất hiện ở khu vực Assets.Bookcase.Books (Thường ở phòng 50)
+                        local room50 = currentRooms:FindFirstChild("50") or currentRooms:FindFirstChild("0") -- Test trên phòng 0 theo log của cậu
+                        if room50 then
+                            for _, obj in ipairs(room50:GetDescendants()) do
+                                -- Quét trúng các MeshPart có chứa cụm từ tên sách từ log cậu đưa ra
+                                if obj:IsA("MeshPart") and (string.find(obj.Name, "Books_Cube") or string.find(string.lower(obj.Name), "book")) then
+                                    createESP(obj, Color3.fromRGB(255, 230, 0), "Sách Giải Mã")
+                                end
+                            end
+                        end
+                    end
+                end)
+                task.wait(2)
+            end
+            bookLoop = nil
+        end)
+    elseif not state then
+        pcall(function()
             for _, obj in ipairs(workspace:GetDescendants()) do
-                if obj.Name == "LiveHintBook" or (obj:IsA("Model") and obj.Name == "Book") then
-                    local dist = (obj:GetPivot().Position - myPos).Magnitude
-                    if dist <= ESP_DISTANCE then
-                        createESP(obj, Color3.fromRGB(255, 234, 0), "Sách Mật Mã")
-                    else
-                        removeESP(obj)
+                if string.find(obj.Name, "Books_Cube") or string.find(string.lower(obj.Name), "book") then
+                    removeESP(obj)
+                end
+            end
+        end)
+    end
+end)
+
+-- ==================== TOGGLE ESP CHÌA KHÓA CHUẨN XÁC (SỬA THEO PHÂN TÍCH CỦA CẬU) ====================
+local keyActive = false
+local keyLoop
+
+-- Trả lại đúng mainTab:CreateToggle theo chuẩn UI của mày
+MainTab:CreateToggle("ESP Chìa Khóa (Fix Theo Log)", function(state)
+    keyActive = state
+    
+    if state and not keyLoop then
+        keyLoop = task.spawn(function()
+            while keyActive do
+                pcall(function()
+                    local currentRooms = workspace:FindFirstChild("CurrentRooms")
+                    if currentRooms then
+                        -- Duyệt qua tất cả các phòng đang có ngoài map
+                        for _, room in ipairs(currentRooms:GetChildren()) do
+                            -- Quét sâu vào bên trong phòng để tìm Model KeyObtain
+                            for _, obj in ipairs(room:GetDescendants()) do
+                                if obj:IsA("Model") and obj.Name == "KeyObtain" then
+                                    
+                                    -- Nhắm thẳng vào phần MeshPart tên "Key" hiển thị hoặc cái Hitbox như cậu phân tích
+                                    local hitbox = obj:FindFirstChild("Hitbox")
+                                    local targetPart = hitbox and (hitbox:FindFirstChild("Key") or hitbox:FindFirstChild("KeyHitbox")) or obj:FindFirstChildWhichIsA("BasePart")
+                                    
+                                    if targetPart then
+                                        -- Gắn ESP màu vàng rực cho Chìa Khóa
+                                        createESP(targetPart, Color3.fromRGB(255, 215, 0), "Chìa Khóa")
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end)
+                task.wait(1.5) -- Quét mỗi 1.5 giây để tránh lag khi đổi phòng
+            end
+            keyLoop = nil
+        end)
+    elseif not state then
+        -- Xóa sạch ESP chìa khóa khi tắt toggle
+        pcall(function()
+            local currentRooms = workspace:FindFirstChild("CurrentRooms")
+            if currentRooms then
+                for _, room in ipairs(currentRooms:GetChildren()) do
+                    for _, obj in ipairs(room:GetDescendants()) do
+                        if obj.Name == "KeyObtain" then
+                            -- Tìm và dọn sạch Highlight/BillboardGui bên trong nó
+                            for _, child in ipairs(obj:GetDescendants()) do
+                                if child.Name == "DoorsESP" or child.Name == "DoorsText" then 
+                                    child:Destroy() 
+                                end
+                            end
+                        end
                     end
                 end
             end
-        end
+        end)
     end
 end)
 
