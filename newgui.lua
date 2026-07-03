@@ -929,275 +929,84 @@ local function removeESP(object)
 	end
 end
 
---// =========================
---// ESP CỬA
---// =========================
+local ESP = {
+    Door = false,
+    Closet = false,
+    Book = false,
+    Key = false,
+}
 
-local doorActive = false
-local doorLoop
+task.spawn(function()
+    while task.wait(0.2) do
+        local rooms = workspace:FindFirstChild("CurrentRooms")
+        if not rooms then
+            continue
+        end
 
-MainTab:CreateToggle("ESP Cửa", function(state)
-    doorActive = state
+        for _, room in ipairs(rooms:GetChildren()) do
 
-    if state and not doorLoop then
-        doorLoop = task.spawn(function()
-            while doorActive do
-                pcall(function()
-                    local currentRooms = workspace:FindFirstChild("CurrentRooms")
-                    if not currentRooms then return end
+            -- ESP CỬA
+            if ESP.Door then
+                local doorModel = room:FindFirstChild("Door")
 
-                    for _, room in ipairs(currentRooms:GetChildren()) do
-                        local doorModel = room:FindFirstChild("Door")
+                if doorModel
+                and doorModel:FindFirstChild("ClientOpen")
+                and doorModel:FindFirstChild("Func_Open")
+                and doorModel:FindFirstChild("Collision") then
 
-                        if doorModel
-                        and doorModel:IsA("Model")
-                        and doorModel:FindFirstChild("ClientOpen")
-                        and doorModel:FindFirstChild("Func_Open")
-                        and doorModel:FindFirstChild("Collision") then
-
-                            local door = doorModel:FindFirstChild("Door")
-                            if door and door:IsA("MeshPart") then
-                                createESP(door, Color3.fromRGB(0, 255, 0), "🚪 Cửa")
-                            end
-                        end
+                    local door = doorModel:FindFirstChild("Door")
+                    if door then
+                        createESP(door, Color3.fromRGB(0,255,0), "Cửa")
                     end
-                end)
-
-                task.wait(1)
-            end
-
-            doorLoop = nil
-        end)
-    elseif not state then
-        pcall(function()
-            for _, v in ipairs(workspace:GetDescendants()) do
-                if v.Name == "DoorsESP" or v.Name == "DoorsText" then
-                    v:Destroy()
                 end
             end
-        end)
+
+            for _, obj in ipairs(room:GetDescendants()) do
+
+                -- ESP TỦ
+                if ESP.Closet then
+                    if obj:IsA("Model") and obj.Name == "Wardrobe" then
+                        createESP(obj, Color3.fromRGB(0,162,255), "Tủ")
+                    end
+                end
+
+                -- ESP SÁCH
+                if ESP.Book then
+                    if obj:IsA("MeshPart") and obj.Name:find("DOORS_Books_Cube") then
+                        createESP(obj, Color3.fromRGB(255,230,0), "Sách")
+                    end
+                end
+
+                -- ESP KEY
+if ESP.Key then
+    if obj:IsA("Model") and obj.Name == "KeyObtain" then
+        createESP(obj, Color3.fromRGB(255, 215, 0), "🔑 Chìa Khóa")
+    end
+end
+                end
+
+            end
+        end
     end
 end)
 
---// =========================
---// ESP TỦ
---// =========================
-
-local closetEnabled=false
-local closetThread
-
-MainTab:CreateToggle("ESP Tủ Trốn",function(state)
-
-	closetEnabled=state
-
-	if state then
-
-		if closetThread then return end
-
-		closetThread=task.spawn(function()
-
-			while closetEnabled do
-
-				local rooms=workspace:FindFirstChild("CurrentRooms")
-
-				if rooms then
-
-					for _,room in ipairs(rooms:GetChildren()) do
-
-						for _,obj in ipairs(room:GetDescendants()) do
-
-							if obj:IsA("Model") and obj.Name=="Wardrobe" then
-
-								createESP(obj,Color3.fromRGB(0,162,255),"Closet")
-
-							end
-
-						end
-
-					end
-
-				end
-
-				task.wait(2)
-
-			end
-
-			closetThread=nil
-
-		end)
-
-	else
-
-		local rooms=workspace:FindFirstChild("CurrentRooms")
-
-		if rooms then
-
-			for _,room in ipairs(rooms:GetChildren()) do
-
-				for _,obj in ipairs(room:GetDescendants()) do
-
-					if obj:IsA("Model") and obj.Name=="Wardrobe" then
-
-						removeESP(obj)
-
-					end
-
-				end
-
-			end
-
-		end
-
-	end
-
+MainTab:CreateToggle("ESP Cửa", function(v)
+    ESP.Door = v
+    if not v then
+        -- remove ESP cửa
+    end
 end)
 
---// =========================
---// ESP SÁCH
---// =========================
-
-local bookEnabled=false
-local bookThread
-
-MainTab:CreateToggle("ESP Sách",function(state)
-
-	bookEnabled=state
-
-	if state then
-
-		if bookThread then return end
-
-		bookThread=task.spawn(function()
-
-			while bookEnabled do
-
-				local rooms=workspace:FindFirstChild("CurrentRooms")
-
-				if rooms then
-
-					for _,room in ipairs(rooms:GetChildren()) do
-
-						for _,obj in ipairs(room:GetDescendants()) do
-
-							if obj:IsA("MeshPart") and obj.Name:find("DOORS_Books_Cube") then
-
-								createESP(obj,Color3.fromRGB(255,230,0),"Book")
-
-							end
-
-						end
-
-					end
-
-				end
-
-				task.wait(2)
-
-			end
-
-			bookThread=nil
-
-		end)
-
-	else
-
-		for _,obj in ipairs(workspace:GetDescendants()) do
-
-			if obj:IsA("MeshPart") and obj.Name:find("DOORS_Books_Cube") then
-
-				removeESP(obj)
-
-			end
-
-		end
-
-	end
-
+MainTab:CreateToggle("ESP Tủ", function(v)
+    ESP.Closet = v
 end)
 
---// =========================
---// ESP CHÌA KHÓA
---// =========================
+MainTab:CreateToggle("ESP Sách", function(v)
+    ESP.Book = v
+end)
 
-local keyEnabled=false
-local keyThread
-
-MainTab:CreateToggle("ESP Chìa Khóa",function(state)
-
-	keyEnabled=state
-
-	if state then
-
-		if keyThread then return end
-
-		keyThread=task.spawn(function()
-
-			while keyEnabled do
-
-				local rooms=workspace:FindFirstChild("CurrentRooms")
-
-				if rooms then
-
-					for _,room in ipairs(rooms:GetChildren()) do
-
-						for _,obj in ipairs(room:GetDescendants()) do
-
-							if obj:IsA("Model") and obj.Name=="KeyObtain" then
-
-								local part=obj:FindFirstChildWhichIsA("BasePart",true)
-
-								if part then
-
-									createESP(part,Color3.fromRGB(255,215,0),"Key")
-
-								end
-
-							end
-
-						end
-
-					end
-
-				end
-
-				task.wait(1)
-
-			end
-
-			keyThread=nil
-
-		end)
-
-	else
-
-		local rooms=workspace:FindFirstChild("CurrentRooms")
-
-		if rooms then
-
-			for _,room in ipairs(rooms:GetChildren()) do
-
-				for _,obj in ipairs(room:GetDescendants()) do
-
-					if obj:IsA("Model") and obj.Name=="KeyObtain" then
-
-						local part=obj:FindFirstChildWhichIsA("BasePart",true)
-
-						if part then
-
-							removeESP(part)
-
-						end
-
-					end
-
-				end
-
-			end
-
-		end
-
-	end
-
+MainTab:CreateToggle("ESP Chìa Khóa", function(v)
+    ESP.Key = v
 end)
 
 -- ==================== TÍNH NĂNG CHỌN PHÒNG VÀ BẤM NÚT ĐỂ MỞ ====================
