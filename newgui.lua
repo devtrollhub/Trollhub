@@ -898,41 +898,82 @@ VerifyGameSupport(function()
 
 local function createESP(object, color, text)
 	if not object then return end
-	if object:FindFirstChild("DoorsESP") then return end
-
-	local h = Instance.new("Highlight")
-	h.Name = "DoorsESP"
-	h.Adornee = object
-	h.FillColor = color
-	h.FillTransparency = 0.5
-	h.OutlineColor = Color3.new(1,1,1)
-	h.OutlineTransparency = 0
-	h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	h.Parent = object
 
 	local adornee = object
 	if object:IsA("Model") then
 		adornee = object.PrimaryPart or object:FindFirstChildWhichIsA("BasePart", true)
 	end
 
-	if adornee then
-		local bill = Instance.new("BillboardGui")
+	if not adornee then
+		return
+	end
+
+	-- Highlight
+	local hl = object:FindFirstChild("DoorsESP")
+	if not hl then
+		hl = Instance.new("Highlight")
+		hl.Name = "DoorsESP"
+		hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+		hl.FillTransparency = 0.55
+		hl.OutlineTransparency = 0
+		hl.Parent = object
+	end
+
+	hl.Adornee = object
+	hl.FillColor = color
+	hl.OutlineColor = Color3.new(1,1,1)
+
+	-- Billboard
+	local bill = object:FindFirstChild("DoorsText")
+	if not bill then
+		bill = Instance.new("BillboardGui")
 		bill.Name = "DoorsText"
-		bill.Adornee = adornee
+		bill.Size = UDim2.new(0,120,0,30)
+		bill.StudsOffset = Vector3.new(0,2.8,0)
 		bill.AlwaysOnTop = true
-		bill.Size = UDim2.new(0,120,0,25)
-		bill.StudsOffset = Vector3.new(0,2.5,0)
+		bill.MaxDistance = 300
 		bill.Parent = object
 
+		local bg = Instance.new("Frame")
+		bg.Size = UDim2.fromScale(1,1)
+		bg.BackgroundColor3 = Color3.fromRGB(20,20,20)
+		bg.BackgroundTransparency = 0.35
+		bg.BorderSizePixel = 0
+		bg.Parent = bill
+
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0,8)
+		corner.Parent = bg
+
+		local stroke = Instance.new("UIStroke")
+		stroke.Thickness = 1.5
+		stroke.Parent = bg
+
 		local label = Instance.new("TextLabel")
+		label.Name = "Label"
 		label.Size = UDim2.fromScale(1,1)
 		label.BackgroundTransparency = 1
 		label.Font = Enum.Font.GothamBold
 		label.TextScaled = true
-		label.TextStrokeTransparency = 0
-		label.TextColor3 = color
-		label.Text = text
-		label.Parent = bill
+		label.TextStrokeTransparency = 0.5
+		label.Parent = bg
+	end
+
+	bill.Adornee = adornee
+
+	local bg = bill:FindFirstChildOfClass("Frame")
+	if bg then
+		local stroke = bg:FindFirstChildOfClass("UIStroke")
+		local label = bg:FindFirstChild("Label")
+
+		if stroke then
+			stroke.Color = color
+		end
+
+		if label then
+			label.Text = text or object.Name
+			label.TextColor3 = color
+		end
 	end
 end
 
@@ -944,9 +985,9 @@ local function removeESP(object)
 		h:Destroy()
 	end
 
-	local t = object:FindFirstChild("DoorsText")
-	if t then
-		t:Destroy()
+	local b = object:FindFirstChild("DoorsText")
+	if b then
+		b:Destroy()
 	end
 end
 
@@ -1000,10 +1041,8 @@ task.spawn(function()
 					local door = model:FindFirstChild("Door")
 
 					if door and door:IsA("MeshPart") then
-						if InRange(door, 80) then
+						if door then
     createESP(door, Color3.fromRGB(0,255,0), "🚪 Door")
-else
-    removeESP(door)
 end
 					end
 				end
@@ -1016,10 +1055,8 @@ end
 					if obj:IsA("Model") and obj.Name == "Wardrobe" then
 						local part = obj.PrimaryPart or obj:FindFirstChildWhichIsA("BasePart", true)
 
-if part and InRange(part, 80) then
+if part then
     createESP(obj, Color3.fromRGB(0,162,255), "🚪 Wardrobe")
-else
-    removeESP(obj)
 end
 					end
 				end
@@ -1027,10 +1064,7 @@ end
 				-- ESP SÁCH
 				if ESP.Book then
 					if obj:IsA("MeshPart") and obj.Name:find("DOORS_Books_Cube") then
-						if InRange(obj, 80) then
     createESP(obj, Color3.fromRGB(255,230,0), "📖 Book")
-else
-    removeESP(obj)
 end
 					end
 				end
@@ -1038,12 +1072,11 @@ end
 				-- ESP CHÌA KHÓA
 				if ESP.Key then
 					if obj:IsA("Model") and obj.Name == "KeyObtain" then
-						if InRange(part, 80) then
+    local part = obj:FindFirstChild("Key", true)
+    or obj:FindFirstChild("KeyHitbox", true)
+if part then
     createESP(part, Color3.fromRGB(255,215,0), "🔑 Key")
-else
-    removeESP(part)
 end
-					end
 				end
 
 			end
@@ -1056,7 +1089,7 @@ end)
 --// TOGGLES
 --//==========================
 
-MainTab:CreateToggle("ESP Cửa", function(v)
+MainTab:CreateToggle("ESP doors", function(v)
 	ESP.Door = v
 
 	if not v then
@@ -1072,7 +1105,7 @@ MainTab:CreateToggle("ESP Cửa", function(v)
 	end
 end)
 
-MainTab:CreateToggle("ESP Tủ", function(v)
+MainTab:CreateToggle("ESP wardrobe", function(v)
 	ESP.Closet = v
 
 	if not v then
@@ -1084,7 +1117,7 @@ MainTab:CreateToggle("ESP Tủ", function(v)
 	end
 end)
 
-MainTab:CreateToggle("ESP Sách", function(v)
+MainTab:CreateToggle("ESP Book", function(v)
 	ESP.Book = v
 
 	if not v then
@@ -1096,7 +1129,7 @@ MainTab:CreateToggle("ESP Sách", function(v)
 	end
 end)
 
-MainTab:CreateToggle("ESP Chìa Khóa", function(v)
+MainTab:CreateToggle("ESP Key", function(v)
 	ESP.Key = v
 
 	if not v then
@@ -1120,7 +1153,7 @@ for i = 1, 100 do
 end
 
 -- 1. DROPDOWN: Chỉ làm nhiệm vụ LƯU lại tên phòng khi mày bấm chọn
-MainTab:CreateDropdown("Chọn Cửa Để Mở (1-100)", danhSachPhong, function(optionChon)
+MainTab:CreateDropdown("Select doors to open (1-100)", danhSachPhong, function(optionChon)
     phongDaChon = optionChon
     print("📍 Đã chọn sẵn: " .. phongDaChon .. " (Bấm nút phía dưới để mở)")
 end)
