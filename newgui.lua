@@ -933,63 +933,50 @@ end
 --// ESP CỬA
 --// =========================
 
-local doorEnabled = false
-local doorThread
+local doorActive = false
+local doorLoop
 
 MainTab:CreateToggle("ESP Cửa", function(state)
+    doorActive = state
 
-	doorEnabled = state
+    if state and not doorLoop then
+        doorLoop = task.spawn(function()
+            while doorActive do
+                pcall(function()
+                    local currentRooms = workspace:FindFirstChild("CurrentRooms")
+                    if not currentRooms then return end
 
-	if state then
+                    for _, room in ipairs(currentRooms:GetChildren()) do
+                        local doorModel = room:FindFirstChild("Door")
 
-		if doorThread then return end
+                        if doorModel
+                        and doorModel:IsA("Model")
+                        and doorModel:FindFirstChild("ClientOpen")
+                        and doorModel:FindFirstChild("Func_Open")
+                        and doorModel:FindFirstChild("Collision") then
 
-		doorThread = task.spawn(function()
+                            local door = doorModel:FindFirstChild("Door")
+                            if door and door:IsA("MeshPart") then
+                                createESP(door, Color3.fromRGB(0, 255, 0), "🚪 Cửa")
+                            end
+                        end
+                    end
+                end)
 
-			while doorEnabled do
+                task.wait(1)
+            end
 
-				local rooms = workspace:FindFirstChild("CurrentRooms")
-
-				if rooms then
-
-					for _,room in ipairs(rooms:GetChildren()) do
-
-						for _,obj in ipairs(room:GetDescendants()) do
-
-							if obj:IsA("MeshPart") and obj.Name == "Door" then
-
-								createESP(obj,Color3.fromRGB(0,255,0),"Door")
-
-							end
-
-						end
-
-					end
-
-				end
-
-				task.wait(1)
-
-			end
-
-			doorThread=nil
-
-		end)
-
-	else
-
-		for _,v in ipairs(workspace:GetDescendants()) do
-
-			if v.Name=="DoorsESP" then
-
-				v:Destroy()
-
-			end
-
-		end
-
-	end
-
+            doorLoop = nil
+        end)
+    elseif not state then
+        pcall(function()
+            for _, v in ipairs(workspace:GetDescendants()) do
+                if v.Name == "DoorsESP" or v.Name == "DoorsText" then
+                    v:Destroy()
+                end
+            end
+        end)
+    end
 end)
 
 --// =========================
@@ -1273,46 +1260,6 @@ MainTab:CreateButton("🚪 Kích Hoạt Mở Cửa", function()
     end
     
     print("🔓 Đã thực thi lệnh mở cửa thành công cho: " .. phongDaChon)
-end)
-
--- [ĐOẠN TOGGLE ĐẶT Ở TRÊN]
-local keyESPActive = false
-local keyLoop
-
-MainTab:CreateToggle("ESP Chìa Khóa (Xịn)", function(state)
-    keyESPActive = state
-    
-    if not state then
-        -- Dọn dẹp ESP khi tắt
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj.Name == "RemoteInspect" then
-                removeESP(obj.Parent)
-            end
-        end
-    end
-end)
-
-
--- [ĐOẠN VÒNG LẶP ĐẶT Ở DƯỚI - Y NGUYÊN BẢN GỐC CỦA MÀY]
-task.spawn(function()
-    while task.wait(1.5) do
-        if keyESPActive then
-            pcall(function()
-                -- Quét toàn bộ map để tìm bất cứ thứ gì có "RemoteInspect"
-                for _, obj in ipairs(workspace:GetDescendants()) do
-                    -- Chỉ những cái chìa khóa thật sự mới có cái RemoteInspect này
-                    if obj.Name == "RemoteInspect" and obj:IsA("RemoteEvent") then
-                        local keyModel = obj.Parent -- Cái chìa khóa là cha của cái Remote đó
-                        
-                        -- Kiểm tra xem đã gắn ESP chưa để tránh bị lag do vẽ đè
-                        if keyModel and not keyModel:FindFirstChild("DoorsESP") then
-                            createESP(keyModel, Color3.fromRGB(255, 255, 0), "Chìa Khóa")
-                        end
-                    end
-                end
-            end)
-        end
-    end
 end)
 
                 MainTab:CreateLabel("🚪 Successfully loaded into DOORS! Features are running perfectly.")
