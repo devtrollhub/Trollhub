@@ -896,33 +896,15 @@ VerifyGameSupport(function()
 local function createESP(object, color, name)
     if not object then return end
     if object:FindFirstChild("DoorsESP") then return end
-    
-    local highlight = Instance.new("Highlight")
-    highlight.Name = "DoorsESP"
-    highlight.FillColor = color
-    highlight.FillOpacity = 0.4
-    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-    highlight.OutlineOpacity = 1
-    highlight.Adornee = object
-    highlight.Parent = object
-    
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "DoorsText"
-    billboard.Size = UDim2.new(0, 100, 0, 30)
-    billboard.AlwaysOnTop = true
-    billboard.StudsOffset = Vector3.new(0, 3, 0)
-    billboard.Adornee = object
-    
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.Text = name
-    textLabel.TextColor3 = color
-    textLabel.TextSize = 14
-    textLabel.Font = Enum.Font.SourceSansBold
-    textLabel.Parent = billboard
-    
-    billboard.Parent = object
+
+    local h = Instance.new("Highlight")
+    h.Name = "DoorsESP"
+    h.Adornee = object
+    h.FillColor = color
+    h.FillTransparency = 0.5
+    h.OutlineTransparency = 0
+    h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    h.Parent = object
 end
 
 local function removeESP(object)
@@ -935,51 +917,36 @@ end
 local doorActive = false
 local doorLoop
 
-MainTab:CreateToggle("ESP Cửa Chuẩn", function(state)
+MainTab:CreateToggle("ESP Cửa", function(state)
     doorActive = state
-    
+
     if state and not doorLoop then
         doorLoop = task.spawn(function()
             while doorActive do
                 pcall(function()
                     local currentRooms = workspace:FindFirstChild("CurrentRooms")
-                    if currentRooms then
-                        for _, room in ipairs(currentRooms:GetChildren()) do
-                            -- Tìm chính xác Model tên "Door" nằm trong phòng (Bỏ hoàn toàn ClientDoor lỗi)
-                            local doorModel = room:FindFirstChild("Door")
-                            if doorModel and doorModel:IsA("Model") then
-                                -- Nhắm vào tấm cửa MeshPart hoặc phần thân chính bên trong nó để gắn ESP
-                                local targetPart = doorModel:FindFirstChild("Door") or doorModel:FindFirstChildWhichIsA("BasePart") or doorModel
-                                createESP(targetPart, Color3.fromRGB(0, 255, 0), "Cửa Phòng " .. room.Name)
-                            end
-                            
-                            -- Quét thêm cửa phụ/cửa hông nếu có (như DoorNormal xuất hiện ở phòng 1 trong log)
-                            local doorNormal = room:FindFirstChild("DoorNormal")
-                            if doorNormal and doorNormal:IsA("Model") then
-                                local targetNormal = doorNormal:FindFirstChild("Door") or doorNormal:FindFirstChildWhichIsA("BasePart") or doorNormal
-                                createESP(targetNormal, Color3.fromRGB(0, 255, 0), "Cửa Phụ " .. room.Name)
+                    if not currentRooms then return end
+
+                    for _, room in ipairs(currentRooms:GetChildren()) do
+                        for _, obj in ipairs(room:GetDescendants()) do
+                            if obj:IsA("MeshPart") and obj.Name == "Door" then
+                                createESP(obj, Color3.fromRGB(0,255,0), "Cửa")
                             end
                         end
                     end
                 end)
-                task.wait(1.5)
+                task.wait(1)
             end
             doorLoop = nil
         end)
-    elseif not state then
-        pcall(function()
-            local currentRooms = workspace:FindFirstChild("CurrentRooms")
-            if currentRooms then
-                for _, room in ipairs(currentRooms:GetChildren()) do
-                    for _, child in ipairs(room:GetDescendants()) do
-                        if child.Name == "DoorsESP" or child.Name == "DoorsText" then child:Destroy() end
-                    end
-                end
+    else
+        for _, v in ipairs(workspace:GetDescendants()) do
+            if v.Name == "DoorsESP" then
+                v:Destroy()
             end
-        end)
+        end
     end
 end)
-
 
 -- ==================== 2. TOGGLE ESP TỦ TRỐN (QUÉT ASSETS CHUẨN) ====================
 local closetActive = false
