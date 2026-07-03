@@ -911,6 +911,7 @@ local function createESP(object, color, text)
 	h.Parent = object
 
 	local adornee = object
+
 	if object:IsA("Model") then
 		adornee = object.PrimaryPart or object:FindFirstChildWhichIsA("BasePart", true)
 	end
@@ -950,35 +951,39 @@ local function removeESP(object)
 	end
 end
 
---/in range
+--//==========================
+--// RANGE
+--//==========================
 
 local RANGE = 80
 
-local function InRange(part)
-    local character = game.Players.LocalPlayer.Character
-    if not character then
-        return false
-    end
+local function InRange(target)
+	local player = game.Players.LocalPlayer
+	local character = player.Character
 
-    local hrp = character:FindFirstChild("HumanoidRootPart")
-    if not hrp or not part then
-        return false
-    end
+	if not character then
+		return false
+	end
 
-    local pos
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		return false
+	end
 
-    if part:IsA("Model") then
-        local p = part.PrimaryPart or part:FindFirstChildWhichIsA("BasePart", true)
-        if not p then
-            return false
-        end
-        pos = p.Position
-    else
-        pos = part.Position
-    end
+	local part
 
-    local diff = pos - hrp.Position
-    return diff:Dot(diff) <= RANGE * RANGE
+	if target:IsA("Model") then
+		part = target.PrimaryPart or target:FindFirstChildWhichIsA("BasePart", true)
+	else
+		part = target
+	end
+
+	if not part then
+		return false
+	end
+
+	local distance = (part.Position - hrp.Position).Magnitude
+	return distance <= RANGE
 end
 
 --//==========================
@@ -1003,7 +1008,7 @@ task.spawn(function()
 
 		for _, room in ipairs(rooms:GetChildren()) do
 
-			-- ESP CỬA
+			-- Door
 			if ESP.Door then
 				local model = room:FindFirstChild("Door")
 
@@ -1017,47 +1022,61 @@ task.spawn(function()
 
 					if door and door:IsA("MeshPart") then
 						if InRange(door) then
-    createESP(door, Color3.fromRGB(0,255,0), "🚪 Door")
-else
-    removeESP(door)
-end
+							createESP(door, Color3.fromRGB(0,255,0), "🚪 Door")
+						else
+							removeESP(door)
+						end
+					end
 				end
 			end
 
 			for _, obj in ipairs(room:GetDescendants()) do
 
-				-- ESP TỦ
+				-- Wardrobe
 				if ESP.Closet then
 					if obj:IsA("Model") and obj.Name == "Wardrobe" then
 						if InRange(obj) then
-    createESP(obj, Color3.fromRGB(0,162,255), "🚪cabinet")
-else
-    removeESP(obj)
-end
+							createESP(obj, Color3.fromRGB(0,162,255), "🚪 Wardrobe")
+						else
+							removeESP(obj)
+						end
+					end
 				end
 
-				-- ESP SÁCH
+				-- Book
 				if ESP.Book then
 					if obj:IsA("MeshPart") and obj.Name:find("DOORS_Books_Cube") then
 						if InRange(obj) then
-    createESP(obj, Color3.fromRGB(255,230,0), "📖 Book")
-else
-    removeESP(obj)
-end
+							createESP(obj, Color3.fromRGB(255,230,0), "📖 Book")
+						else
+							removeESP(obj)
+						end
+					end
 				end
 
-				-- ESP CHÌA KHÓA
+				-- Key
 				if ESP.Key then
 					if obj:IsA("Model") and obj.Name == "KeyObtain" then
-						if InRange(obj) then
-    createESP(obj, Color3.fromRGB(255,215,0), "🔑 Key")
-else
-    removeESP(obj)
-end
+
+						local part =
+							obj:FindFirstChild("Key")
+							or obj:FindFirstChild("KeyHitbox")
+							or obj:FindFirstChildWhichIsA("BasePart", true)
+
+						if part then
+							if InRange(part) then
+								createESP(part, Color3.fromRGB(255,215,0), "🔑 Key")
+							else
+								removeESP(part)
+							end
+						end
+
+					end
 				end
 
 			end
 		end
+
 	end
 
 end)
@@ -1066,7 +1085,7 @@ end)
 --// TOGGLES
 --//==========================
 
-MainTab:CreateToggle("ESP Cửa", function(v)
+MainTab:CreateToggle("ESP Door", function(v)
 	ESP.Door = v
 
 	if not v then
@@ -1082,7 +1101,7 @@ MainTab:CreateToggle("ESP Cửa", function(v)
 	end
 end)
 
-MainTab:CreateToggle("ESP Tủ", function(v)
+MainTab:CreateToggle("ESP Wardrobe", function(v)
 	ESP.Closet = v
 
 	if not v then
@@ -1094,7 +1113,7 @@ MainTab:CreateToggle("ESP Tủ", function(v)
 	end
 end)
 
-MainTab:CreateToggle("ESP Sách", function(v)
+MainTab:CreateToggle("ESP Book", function(v)
 	ESP.Book = v
 
 	if not v then
@@ -1106,13 +1125,20 @@ MainTab:CreateToggle("ESP Sách", function(v)
 	end
 end)
 
-MainTab:CreateToggle("ESP Chìa Khóa", function(v)
+MainTab:CreateToggle("ESP Key", function(v)
 	ESP.Key = v
 
 	if not v then
 		for _, obj in ipairs(workspace:GetDescendants()) do
 			if obj:IsA("Model") and obj.Name == "KeyObtain" then
-				removeESP(obj)
+				local part =
+					obj:FindFirstChild("Key")
+					or obj:FindFirstChild("KeyHitbox")
+					or obj:FindFirstChildWhichIsA("BasePart", true)
+
+				if part then
+					removeESP(part)
+				end
 			end
 		end
 	end
