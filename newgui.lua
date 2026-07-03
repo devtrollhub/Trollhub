@@ -983,17 +983,11 @@ MainTab:CreateToggle("ESP Tủ Trốn", function(state)
             local currentRooms = workspace:FindFirstChild("CurrentRooms")
             if currentRooms then
                 for _, room in ipairs(currentRooms:GetChildren()) do
-                    local assets = room:FindFirstChild("Assets")
-                    if assets then
-                        local wardrobe = assets:FindFirstChild("Wardrobe")
-                        if wardrobe then removeESP(wardrobe) end
-                    end
-                end
-            end
-        end)
+for _, obj in ipairs(room:GetDescendants()) do
+    if obj:IsA("Model") and obj.Name == "Wardrobe" then
+        createESP(obj, Color3.fromRGB(0,162,255), "Tủ Trốn")
     end
-end)
-
+end
 
 -- ==================== 3. TOGGLE ESP SÁCH PHÒNG 50 (SỬA THEO MESH CUBE) ====================
 local bookActive = false
@@ -1009,31 +1003,13 @@ MainTab:CreateToggle("ESP Sách Phòng 50", function(state)
                     local currentRooms = workspace:FindFirstChild("CurrentRooms")
                     if currentRooms then
                         -- Sách xuất hiện ở khu vực Assets.Bookcase.Books (Thường ở phòng 50)
-                        local room50 = currentRooms:FindFirstChild("50") or currentRooms:FindFirstChild("0") -- Test trên phòng 0 theo log của cậu
-                        if room50 then
-                            for _, obj in ipairs(room50:GetDescendants()) do
-                                -- Quét trúng các MeshPart có chứa cụm từ tên sách từ log cậu đưa ra
-                                if obj:IsA("MeshPart") and (string.find(obj.Name, "Books_Cube") or string.find(string.lower(obj.Name), "book")) then
-                                    createESP(obj, Color3.fromRGB(255, 230, 0), "Sách Giải Mã")
-                                end
-                            end
-                        end
-                    end
-                end)
-                task.wait(2)
-            end
-            bookLoop = nil
-        end)
-    elseif not state then
-        pcall(function()
-            for _, obj in ipairs(workspace:GetDescendants()) do
-                if string.find(obj.Name, "Books_Cube") or string.find(string.lower(obj.Name), "book") then
-                    removeESP(obj)
-                end
-            end
-        end)
+                        for _, room in ipairs(currentRooms:GetChildren()) do
+    for _, obj in ipairs(room:GetDescendants()) do
+        if obj:IsA("MeshPart") and obj.Name:find("DOORS_Books_Cube") then
+            createESP(obj, Color3.fromRGB(255,230,0), "Sách")
+        end
     end
-end)
+end
 
 -- ==================== TOGGLE ESP CHÌA KHÓA CHUẨN XÁC (SỬA THEO PHÂN TÍCH CỦA CẬU) ====================
 local keyActive = false
@@ -1051,22 +1027,15 @@ MainTab:CreateToggle("ESP Chìa Khóa (Fix Theo Log)", function(state)
                     if currentRooms then
                         -- Duyệt qua tất cả các phòng đang có ngoài map
                         for _, room in ipairs(currentRooms:GetChildren()) do
-                            -- Quét sâu vào bên trong phòng để tìm Model KeyObtain
-                            for _, obj in ipairs(room:GetDescendants()) do
-                                if obj:IsA("Model") and obj.Name == "KeyObtain" then
-                                    
-                                    -- Nhắm thẳng vào phần MeshPart tên "Key" hiển thị hoặc cái Hitbox như cậu phân tích
-                                    local hitbox = obj:FindFirstChild("Hitbox")
-                                    local targetPart = hitbox and (hitbox:FindFirstChild("Key") or hitbox:FindFirstChild("KeyHitbox")) or obj:FindFirstChildWhichIsA("BasePart")
-                                    
-                                    if targetPart then
-                                        -- Gắn ESP màu vàng rực cho Chìa Khóa
-                                        createESP(targetPart, Color3.fromRGB(255, 215, 0), "Chìa Khóa")
-                                    end
-                                end
-                            end
-                        end
-                    end
+    for _, obj in ipairs(room:GetDescendants()) do
+        if obj:IsA("Model") and obj.Name == "KeyObtain" then
+            local part = obj:FindFirstChildWhichIsA("BasePart", true)
+            if part then
+                createESP(part, Color3.fromRGB(255,215,0), "Chìa Khóa")
+            end
+        end
+    end
+end
                 end)
                 task.wait(1.5) -- Quét mỗi 1.5 giây để tránh lag khi đổi phòng
             end
