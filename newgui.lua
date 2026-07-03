@@ -892,17 +892,13 @@ VerifyGameSupport(function()
                 local MainTab = MyHub:CreateTab("🚪 DOORS Main")
                 InfoTab = MyHub:CreateTab("ℹ️ Info")
 
---// =========================
+--//==========================
 --// ESP FUNCTIONS
---// =========================
+--//==========================
 
 local function createESP(object, color, text)
 	if not object then return end
-
-	local old = object:FindFirstChild("DoorsESP")
-	if old then
-		old:Destroy()
-	end
+	if object:FindFirstChild("DoorsESP") then return end
 
 	local h = Instance.new("Highlight")
 	h.Name = "DoorsESP"
@@ -913,6 +909,31 @@ local function createESP(object, color, text)
 	h.OutlineTransparency = 0
 	h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 	h.Parent = object
+
+	local adornee = object
+	if object:IsA("Model") then
+		adornee = object.PrimaryPart or object:FindFirstChildWhichIsA("BasePart", true)
+	end
+
+	if adornee then
+		local bill = Instance.new("BillboardGui")
+		bill.Name = "DoorsText"
+		bill.Adornee = adornee
+		bill.AlwaysOnTop = true
+		bill.Size = UDim2.new(0,120,0,25)
+		bill.StudsOffset = Vector3.new(0,2.5,0)
+		bill.Parent = object
+
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.fromScale(1,1)
+		label.BackgroundTransparency = 1
+		label.Font = Enum.Font.GothamBold
+		label.TextScaled = true
+		label.TextStrokeTransparency = 0
+		label.TextColor3 = color
+		label.Text = text
+		label.Parent = bill
+	end
 end
 
 local function removeESP(object)
@@ -923,90 +944,135 @@ local function removeESP(object)
 		h:Destroy()
 	end
 
-	local b = object:FindFirstChild("DoorsText")
-	if b then
-		b:Destroy()
+	local t = object:FindFirstChild("DoorsText")
+	if t then
+		t:Destroy()
 	end
 end
 
+--//==========================
+--// ESP MANAGER
+--//==========================
+
 local ESP = {
-    Door = false,
-    Closet = false,
-    Book = false,
-    Key = false,
+	Door = false,
+	Closet = false,
+	Book = false,
+	Key = false,
 }
 
 task.spawn(function()
-    while task.wait(0.2) do
-        local rooms = workspace:FindFirstChild("CurrentRooms")
-        if not rooms then
-            continue
-        end
 
-        for _, room in ipairs(rooms:GetChildren()) do
+	while task.wait(0.2) do
 
-            -- ESP CỬA
-            if ESP.Door then
-                local doorModel = room:FindFirstChild("Door")
+		local rooms = workspace:FindFirstChild("CurrentRooms")
+		if not rooms then
+			continue
+		end
 
-                if doorModel
-                and doorModel:FindFirstChild("ClientOpen")
-                and doorModel:FindFirstChild("Func_Open")
-                and doorModel:FindFirstChild("Collision") then
+		for _, room in ipairs(rooms:GetChildren()) do
 
-                    local door = doorModel:FindFirstChild("Door")
-                    if door then
-                        createESP(door, Color3.fromRGB(0,255,0), "Cửa")
-                    end
-                end
-            end
+			-- ESP CỬA
+			if ESP.Door then
+				local model = room:FindFirstChild("Door")
 
-            for _, obj in ipairs(room:GetDescendants()) do
+				if model
+				and model:IsA("Model")
+				and model:FindFirstChild("ClientOpen")
+				and model:FindFirstChild("Func_Open")
+				and model:FindFirstChild("Collision") then
 
-                -- ESP TỦ
-                if ESP.Closet then
-                    if obj:IsA("Model") and obj.Name == "Wardrobe" then
-                        createESP(obj, Color3.fromRGB(0,162,255), "Tủ")
-                    end
-                end
+					local door = model:FindFirstChild("Door")
 
-                -- ESP SÁCH
-                if ESP.Book then
-                    if obj:IsA("MeshPart") and obj.Name:find("DOORS_Books_Cube") then
-                        createESP(obj, Color3.fromRGB(255,230,0), "Sách")
-                    end
-                end
+					if door and door:IsA("MeshPart") then
+						createESP(door, Color3.fromRGB(0,255,0), "🚪 Cửa")
+					end
+				end
+			end
 
-                -- ESP KEY
-if ESP.Key then
-    if obj:IsA("Model") and obj.Name == "KeyObtain" then
-        createESP(obj, Color3.fromRGB(255, 215, 0), "🔑 Chìa Khóa")
-    end
-end
-                end
+			for _, obj in ipairs(room:GetDescendants()) do
 
-            end
-        end
-    end
+				-- ESP TỦ
+				if ESP.Closet then
+					if obj:IsA("Model") and obj.Name == "Wardrobe" then
+						createESP(obj, Color3.fromRGB(0,162,255), "🚪 Tủ")
+					end
+				end
+
+				-- ESP SÁCH
+				if ESP.Book then
+					if obj:IsA("MeshPart") and obj.Name:find("DOORS_Books_Cube") then
+						createESP(obj, Color3.fromRGB(255,230,0), "📖 Sách")
+					end
+				end
+
+				-- ESP CHÌA KHÓA
+				if ESP.Key then
+					if obj:IsA("Model") and obj.Name == "KeyObtain" then
+						createESP(obj, Color3.fromRGB(255,215,0), "🔑 Chìa Khóa")
+					end
+				end
+
+			end
+		end
+	end
+
 end)
 
+--//==========================
+--// TOGGLES
+--//==========================
+
 MainTab:CreateToggle("ESP Cửa", function(v)
-    ESP.Door = v
-    if not v then
-        -- remove ESP cửa
-    end
+	ESP.Door = v
+
+	if not v then
+		for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+			local model = room:FindFirstChild("Door")
+			if model then
+				local door = model:FindFirstChild("Door")
+				if door then
+					removeESP(door)
+				end
+			end
+		end
+	end
 end)
 
 MainTab:CreateToggle("ESP Tủ", function(v)
-    ESP.Closet = v
+	ESP.Closet = v
+
+	if not v then
+		for _, obj in ipairs(workspace:GetDescendants()) do
+			if obj:IsA("Model") and obj.Name == "Wardrobe" then
+				removeESP(obj)
+			end
+		end
+	end
 end)
 
 MainTab:CreateToggle("ESP Sách", function(v)
-    ESP.Book = v
+	ESP.Book = v
+
+	if not v then
+		for _, obj in ipairs(workspace:GetDescendants()) do
+			if obj:IsA("MeshPart") and obj.Name:find("DOORS_Books_Cube") then
+				removeESP(obj)
+			end
+		end
+	end
 end)
 
 MainTab:CreateToggle("ESP Chìa Khóa", function(v)
-    ESP.Key = v
+	ESP.Key = v
+
+	if not v then
+		for _, obj in ipairs(workspace:GetDescendants()) do
+			if obj:IsA("Model") and obj.Name == "KeyObtain" then
+				removeESP(obj)
+			end
+		end
+	end
 end)
 
 -- ==================== TÍNH NĂNG CHỌN PHÒNG VÀ BẤM NÚT ĐỂ MỞ ====================
