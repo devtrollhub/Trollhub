@@ -27,6 +27,7 @@ local TargetGames = {
     [97598239454123] = "Grow A Garden 2",
     [7577961216]     = "Squid Game X (Lobby)",
     [7577981568]     = "Squid Game X (Gameplay)",
+    [5777099015]     = "Leave Chess [Horror]",
 }
 
 -- Gán tên game ngay đầu để check không lỗi
@@ -68,7 +69,7 @@ local function VerifyGameSupport(callback)
         CheckText.TextColor3 = Color3.fromRGB(255, 50, 50)
         CheckText.Text = "🔴 Game Not Supported!"
         task.wait(1)
-        LocalPlayer:Kick("🔴 Hub Error: This game is not supported by BloxY Hub!")
+        LocalPlayer:Kick("🔴 Hub Error: This game is not supported by Troll Hub!")
         return
     else
         CheckText.TextColor3 = Color3.fromRGB(0, 180, 90)
@@ -624,6 +625,8 @@ VerifyGameSupport(function()
                 HubTitle = "Troll Hub Grow a Garden 2 🏡"
             elseif currentId == 7577961216 or currentId == 7577981568 then
                 HubTitle = "Troll Hub Squid Game X"
+            elseif currentld == 5777099015 then
+                HubTitle = "Leave Chess v1.0"
             end
             
             local MyHub = HubLib:CreateWindow(HubTitle, 14241061453)
@@ -1240,7 +1243,7 @@ end)
                 MainTab:CreateLabel("🚪 Successfully loaded into DOORS! Features are running perfectly.")
                 InfoTab:CreateLabel("👑 Owner: Haianh-trollhub")
                 InfoTab:CreateLabel("🚀 Version: Troll Hub DOORS v1.0")
-                InfoTab:CreateLabel("📅 Last Update: 19/06/2026")
+                InfoTab:CreateLabel("📅 Last Update: 7/07/2026")
 
             -- ===============================================================================
             -- 4. LOCATION: DIVAZ GAME
@@ -1453,6 +1456,45 @@ end)
                 InfoTab:CreateLabel("👑 Owner: Haianh-trollhub")
                 InfoTab:CreateLabel("🚀 Version: TROLL HUB SQUID GAME X version 1.0")
                 InfoTab:CreateLabel("📅 Last Update: 21/06/2026")
+
+            -- ===============================================================================
+            -- 7. LOCATION: LEAVE CHESS
+            -- ===============================================================================
+            elseif currentId == 5777099015 then
+                local MainTab = Myhub:CreateTab("Main")
+                InfoTab = MyHub:CreateTab("Information")
+
+MainTab:CreateButton("🧀 Add Cheese", function()
+    game:GetService("ReplicatedStorage"):WaitForChild("AddCheese"):FireServer()
+end)
+
+                local customSpeed = 16
+                local speedConnection = nil
+
+                MainTab:CreateBox("WalkSpeed Value (Default: 16)", function(value)
+                    if tonumber(value) then customSpeed = tonumber(value) end
+                end)
+
+                MainTab:CreateToggle("Enable WalkSpeed", function(state)
+                    if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
+                    if state then
+                        speedConnection = game:GetService("RunService").RenderStepped:Connect(function()
+                            local char = LocalPlayer.Character
+                            local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+                            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                            if humanoid and hrp and humanoid.MoveDirection.Magnitude > 0 then
+                                local setSpeed = (customSpeed - humanoid.WalkSpeed) / 100
+                                hrp.CFrame = hrp.CFrame + (humanoid.MoveDirection * setSpeed)
+                            end
+                        end)
+                    else
+                        if speedConnection then speedConnection:Disconnect(); speedConnection = nil end
+                    end
+                end)
+
+InfoTab:CreateLabel("👑 Owner: Haianh-trollhub")
+                InfoTab:CreateLabel("🚀 Version: TROLL HUB LEAVE CHESS version 1.0")
+                InfoTab:CreateLabel("📅 Last Update: 7/07/2026")
 
 end
 
